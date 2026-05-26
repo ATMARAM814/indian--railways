@@ -465,7 +465,49 @@ function AOmModule({ user, onLogout }) {
   const [stationSearch, setStationSearch] = useState("");
   const [stationMasterSearch, setStationMasterSearch] = useState("");
   const [stationCurrentPage, setStationCurrentPage] = useState(1);
-  
+
+  // States for Pointsman Under Station Master Page
+  const [selectedSMForPointsmen, setSelectedSMForPointsmen] = useState(null);
+  const [selectedPointsmanForMonitoring, setSelectedPointsmanForMonitoring] = useState(null);
+  const [pointsmanSearchText, setPointsmanSearchText] = useState("");
+  const [pointsmanRiskFilter, setPointsmanRiskFilter] = useState("All");
+  const [pointsmanStatusFilter, setPointsmanStatusFilter] = useState("All");
+
+  const aomPointsmenSeed = [
+    { id: 1, hrmsId: "PM_1001", name: "Ravi Kumar", gender: "Male", age: 38, doj: "2012-04-10", basePay: "₹28,500", lastScore: 92, safetyScore: 95, totalAssessments: 12, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Approved", monitoringStatus: "Active", stationCode: "NGP", stationName: "Nagpur Junction" },
+    { id: 2, hrmsId: "PM_1102", name: "Sanjay Patil", gender: "Male", age: 34, doj: "2015-08-22", basePay: "₹26,200", lastScore: 78, safetyScore: 80, totalAssessments: 9, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Pending", monitoringStatus: "On Duty", stationCode: "NGP", stationName: "Nagpur Junction" },
+    { id: 3, hrmsId: "PM_1103", name: "Deepak Nair", gender: "Male", age: 41, doj: "2009-11-05", basePay: "₹31,000", lastScore: 48, safetyScore: 62, totalAssessments: 15, pmeStatus: "Fit", refStatus: "Pending", disciplinary: "Warning", incidents: 1, approvalStatus: "Approved", monitoringStatus: "Off Duty", stationCode: "PUNE", stationName: "Pune Junction" },
+    { id: 4, hrmsId: "PM_1104", name: "Ajay Sharma", gender: "Male", age: 29, doj: "2019-02-18", basePay: "₹23,400", lastScore: 84, safetyScore: 88, totalAssessments: 6, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Pending", monitoringStatus: "Active", stationCode: "PUNE", stationName: "Pune Junction" },
+    { id: 5, hrmsId: "PM_1105", name: "Kunal Verma", gender: "Male", age: 36, doj: "2013-07-30", basePay: "₹27,800", lastScore: 35, safetyScore: 55, totalAssessments: 11, pmeStatus: "Unfit", refStatus: "Pending", disciplinary: "Warning", incidents: 2, approvalStatus: "Rejected", monitoringStatus: "Absent", stationCode: "NGP", stationName: "Nagpur Junction" },
+    { id: 6, hrmsId: "PM_1106", name: "Priya Menon", gender: "Female", age: 31, doj: "2018-03-14", basePay: "₹25,100", lastScore: 67, safetyScore: 74, totalAssessments: 7, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Approved", monitoringStatus: "On Duty", stationCode: "NDLS", stationName: "New Delhi" },
+    { id: 7, hrmsId: "PM_1107", name: "Ramesh Yadav", gender: "Male", age: 45, doj: "2005-09-01", basePay: "₹34,600", lastScore: 82, safetyScore: 90, totalAssessments: 18, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Approved", monitoringStatus: "Off Duty", stationCode: "NDLS", stationName: "New Delhi" },
+    { id: 8, hrmsId: "PM_1108", name: "Sneha Iyer", gender: "Female", age: 28, doj: "2020-01-20", basePay: "₹22,000", lastScore: 19, safetyScore: 40, totalAssessments: 3, pmeStatus: "Unfit", refStatus: "Pending", disciplinary: "Serious", incidents: 3, approvalStatus: "Rejected", monitoringStatus: "Absent", stationCode: "NDLS", stationName: "New Delhi" }
+  ];
+
+  const [aomPointsmen, setAomPointsmen] = useState(aomPointsmenSeed);
+
+  const getPmCat = (score) => {
+    if (score >= 80) return "A";
+    if (score >= 50) return "B";
+    if (score >= 26) return "C";
+    return "D";
+  };
+
+  const getPmRisk = (pm) => {
+    if (pm.safetyScore < 60 || pm.lastScore < 50) return "High";
+    if (pm.safetyScore < 75 || pm.lastScore < 65) return "Medium";
+    return "Low";
+  };
+
+  const handleStationMasterClick = (sm) => {
+    setSelectedSMForPointsmen(sm);
+    setSelectedPointsmanForMonitoring(null);
+    setPointsmanSearchText("");
+    setPointsmanRiskFilter("All");
+    setPointsmanStatusFilter("All");
+    setActivePage("Pointsman Under Station Master");
+  };
+
     const stationMastersDirectory = stations
       .filter((station) => Boolean(station.stationMasterName && station.stationMasterName.trim()))
       .map((station) => ({
@@ -1670,6 +1712,412 @@ function AOmModule({ user, onLogout }) {
     );
   };
 
+  const renderPointsmanMonitoringDetail = (pm) => {
+    const cat = getPmCat(pm.lastScore);
+    const risk = getPmRisk(pm);
+    
+    // Mock assessment history for pointsman
+    const pmAssessmentHistoryMock = {
+      PM_1001: [
+        { date: "2026-03-28", testMarks: 80, addMarks: 12, total: 92, grade: "A", approvalStatus: "Approved", remarks: "Excellent yard duties and signaling knowledge." },
+        { date: "2025-12-15", testMarks: 74, addMarks: 10, total: 84, grade: "A", approvalStatus: "Approved", remarks: "Solid performance under winter operations." }
+      ],
+      PM_1102: [
+        { date: "2026-03-10", testMarks: 65, addMarks: 13, total: 78, grade: "B", approvalStatus: "Pending", remarks: "Demonstrates consistent safety alertness." }
+      ],
+      PM_1103: [
+        { date: "2026-02-15", testMarks: 38, addMarks: 10, total: 48, grade: "C", approvalStatus: "Approved", remarks: "Requires strict adherence to signal placement guidelines." }
+      ],
+      PM_1104: [
+        { date: "2026-03-18", testMarks: 72, addMarks: 12, total: 84, grade: "A", approvalStatus: "Pending", remarks: "Very proactive and vigilant on main line siding duties." }
+      ],
+      PM_1105: [
+        { date: "2026-01-20", testMarks: 25, addMarks: 10, total: 35, grade: "D", approvalStatus: "Rejected", remarks: "Unsatisfactory compliance on hand signaling drills." }
+      ],
+      PM_1106: [
+        { date: "2026-03-05", testMarks: 55, addMarks: 12, total: 67, grade: "B", approvalStatus: "Approved", remarks: "Alert and prompt response to train siding movements." }
+      ],
+      PM_1107: [
+        { date: "2026-03-20", testMarks: 70, addMarks: 12, total: 82, grade: "A", approvalStatus: "Approved", remarks: "Outstanding safety observance during high traffic shift." }
+      ],
+      PM_1108: [
+        { date: "2026-02-01", testMarks: 12, addMarks: 7, total: 19, grade: "D", approvalStatus: "Rejected", remarks: "Severe safety oversight near point 4B. Re-training mandatory." }
+      ]
+    };
+    
+    const hist = pmAssessmentHistoryMock[pm.hrmsId] || [];
+
+    return (
+      <div className="pointsman-monitoring-detail-wrapper" style={{ animation: "fadeIn 0.3s ease-out" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <button 
+            type="button" 
+            className="sm2-monitor-btn"
+            onClick={() => setSelectedPointsmanForMonitoring(null)}
+            style={{
+              backgroundColor: "#ffffff",
+              color: "#334155",
+              border: "1px solid #cbd5e1",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            ← Back to Pointsman List
+          </button>
+          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>Live Operations Audit Platform</span>
+        </div>
+
+        {/* HERO CARD */}
+        <div className="sm2-pm-hero" style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+          background: "linear-gradient(135deg, #0d2c4d 0%, #163d66 100%)",
+          color: "#ffffff",
+          padding: "24px",
+          borderRadius: "16px",
+          boxShadow: "0 10px 25px -5px rgba(13, 44, 77, 0.15)",
+          marginBottom: "24px",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div className="sm2-pm-avatar" style={{
+            width: "72px",
+            height: "72px",
+            background: "rgba(255, 255, 255, 0.15)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "28px",
+            fontWeight: "800",
+            border: "2px solid rgba(255, 255, 255, 0.25)"
+          }}>
+            {pm.name.charAt(0)}
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{pm.name}</h3>
+            <span style={{ fontSize: "13px", opacity: 0.85, fontWeight: "500" }}>
+              {pm.hrmsId} · Pointsman · {pm.stationName}
+            </span>
+            <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+              <span style={{
+                background: "rgba(255, 255, 255, 0.15)",
+                color: "#ffffff",
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                fontSize: "11px",
+                fontWeight: "700",
+                letterSpacing: "0.2px"
+              }}>
+                Category {cat}
+              </span>
+              <span style={{
+                background: risk === "High" ? "#fee2e2" : risk === "Medium" ? "#fef3c7" : "#dcfce7",
+                color: risk === "High" ? "#b91c1c" : risk === "Medium" ? "#b45309" : "#15803d",
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                fontSize: "11px",
+                fontWeight: "700"
+              }}>
+                {risk} Risk
+              </span>
+              <span style={{
+                background: pm.approvalStatus === "Approved" ? "#dcfce7" : pm.approvalStatus === "Pending" ? "#dbeafe" : "#fee2e2",
+                color: pm.approvalStatus === "Approved" ? "#15803d" : pm.approvalStatus === "Pending" ? "#1d4ed8" : "#b91c1c",
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                fontSize: "11px",
+                fontWeight: "700"
+              }}>
+                {pm.approvalStatus}
+              </span>
+            </div>
+          </div>
+          <div className="sm2-pm-quick-stats" style={{
+            display: "flex",
+            gap: "20px",
+            background: "rgba(255, 255, 255, 0.08)",
+            padding: "12px 20px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255, 255, 255, 0.1)"
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Latest Score</label>
+              <strong style={{ fontSize: "18px", fontWeight: "800" }}>{pm.lastScore}/100</strong>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Safety Score</label>
+              <strong style={{ fontSize: "18px", fontWeight: "800", color: "#6ee7b7" }}>{pm.safetyScore}%</strong>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Assessments</label>
+              <strong style={{ fontSize: "18px", fontWeight: "800" }}>{pm.totalAssessments}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* DETAILS GRID */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
+          
+          {/* PERSONAL INFO */}
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
+            <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Users size={16} /> Employee Information
+            </h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Gender</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.gender}</dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Age</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.age} Years</dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Date of Joining</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.doj}</dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Base Pay</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.basePay}</dd>
+              </div>
+            </div>
+          </div>
+
+          {/* SAFETY COMPLIANCE */}
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
+            <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d", display: "flex", alignItems: "center", gap: "6px" }}>
+              <ShieldCheck size={16} /> Safety & Audit Compliance
+            </h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>PME Status</dt>
+                <dd style={{ margin: 0 }}>
+                  <span style={{
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    color: pm.pmeStatus === "Fit" ? "#16a34a" : "#dc2626",
+                    background: pm.pmeStatus === "Fit" ? "#dcfce7" : "#fee2e2",
+                    padding: "2px 8px",
+                    borderRadius: "4px"
+                  }}>{pm.pmeStatus}</span>
+                </dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Refresher Course</dt>
+                <dd style={{ margin: 0 }}>
+                  <span style={{
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    color: pm.refStatus === "Cleared" ? "#16a34a" : "#d97706",
+                    background: pm.refStatus === "Cleared" ? "#dcfce7" : "#fef3c7",
+                    padding: "2px 8px",
+                    borderRadius: "4px"
+                  }}>{pm.refStatus}</span>
+                </dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Disciplinary Action</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: pm.disciplinary === "None" ? "#16a34a" : "#dc2626", fontWeight: "700" }}>{pm.disciplinary}</dd>
+              </div>
+              <div>
+                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Recorded Incidents</dt>
+                <dd style={{ margin: 0, fontSize: "14px", color: pm.incidents === 0 ? "#16a34a" : "#dc2626", fontWeight: "700" }}>{pm.incidents}</dd>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MONITORING STATUS SECTION */}
+        <div style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "14px",
+          padding: "20px",
+          boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)",
+          marginBottom: "24px"
+        }}>
+          <h4 style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            margin: "0 0 16px 0",
+            fontSize: "14px",
+            fontWeight: "700",
+            color: "#0f172a",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px"
+          }}>
+            <Activity size={16} color="#0d2c4d" /> Monitoring Status
+          </h4>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+            {[
+              { 
+                status: "Active", 
+                color: "#16a34a", 
+                bg: "#dcfce7", 
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" fill="#16a34a" fillOpacity="0.2" />
+                    <circle cx="12" cy="12" r="3" fill="#16a34a" />
+                  </svg>
+                ),
+                desc: "Available for yard operations" 
+              },
+              { 
+                status: "On Duty", 
+                color: "#d97706", 
+                bg: "#fef3c7", 
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                ),
+                desc: "Currently executing track tasks" 
+              },
+              { 
+                status: "Off Duty", 
+                color: "#64748b", 
+                bg: "#f1f5f9", 
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                ),
+                desc: "Resting / Shift ended" 
+              },
+              { 
+                status: "Absent", 
+                color: "#dc2626", 
+                bg: "#fee2e2", 
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                ),
+                desc: "Unexcused leave of absence" 
+              }
+            ].map(item => {
+              const isActive = (pm.monitoringStatus || "Active") === item.status;
+              return (
+                <div
+                  key={item.status}
+                  style={{
+                    padding: "14px",
+                    borderRadius: "10px",
+                    border: isActive ? `1.5px solid ${item.color}` : "1.5px solid #e2e8f0",
+                    background: isActive ? item.bg : "#ffffff",
+                    boxShadow: isActive ? `0 4px 14px ${item.color}15` : "none",
+                    opacity: isActive ? 1 : 0.6,
+                    transform: isActive ? "scale(1.02)" : "none",
+                    transition: "all 0.2s ease",
+                    cursor: "default"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ display: "flex", alignItems: "center" }}>{item.icon}</span>
+                      <span style={{
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        color: isActive ? item.color : "#334155"
+                      }}>
+                        {item.status}
+                      </span>
+                    </div>
+                    {isActive && (
+                      <span style={{
+                        fontSize: "9px",
+                        fontWeight: "800",
+                        background: item.color,
+                        color: "#ffffff",
+                        padding: "2px 8px",
+                        borderRadius: "9999px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.2px"
+                      }}>
+                        Current
+                      </span>
+                    )}
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: "11px",
+                    color: isActive ? "#334155" : "#64748b",
+                    fontWeight: isActive ? "500" : "400",
+                    lineHeight: "1.4"
+                  }}>
+                    {item.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* HISTORICAL ASSESSMENTS TABLE */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
+          <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d" }}>
+            Assessment History (by SM & TI)
+          </h4>
+          <div className="users-table-wrapper" style={{ overflowX: "auto" }}>
+            <table className="reports-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Date</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Test Score (25)</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>TI Review Score (75)</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Total (100)</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Grade</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Status</th>
+                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Officer Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hist.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ padding: "20px", textShadow: "none", textAlign: "center", color: "#64748b" }}>
+                      No assessment records found.
+                    </td>
+                  </tr>
+                ) : (
+                  hist.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "12px", fontSize: "13px", fontWeight: "600", color: "#0f172a" }}>{h.date}</td>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "#334155" }}>{h.testMarks}/25</td>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "#334155" }}>{h.addMarks}/75</td>
+                      <td style={{ padding: "12px", fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{h.total}/100</td>
+                      <td style={{ padding: "12px" }}>
+                        <span style={{
+                          background: h.grade === "A" ? "#dcfce7" : h.grade === "B" ? "#dbeafe" : h.grade === "C" ? "#fef3c7" : "#fee2e2",
+                          color: h.grade === "A" ? "#15803d" : h.grade === "B" ? "#1d4ed8" : h.grade === "C" ? "#b45309" : "#b91c1c",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontWeight: "700",
+                          fontSize: "11px"
+                        }}>Grade {h.grade}</span>
+                      </td>
+                      <td style={{ padding: "12px" }}>
+                        <span className={`sm2-status-pill sm2-status-${h.approvalStatus.toLowerCase()}`}>{h.approvalStatus}</span>
+                      </td>
+                      <td style={{ padding: "12px", fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>{h.remarks}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPageContent = () => {
     switch (activePage) {
       case "Dashboard":
@@ -2059,15 +2507,21 @@ function AOmModule({ user, onLogout }) {
                     <div>Category</div>
                     <div>Contact</div>
                     <div>Email</div>
+                    <div>Action</div>
                   </div>
 
                   {filteredStationMasters.length === 0 ? (
                     <div className="table-empty-state">No Station Masters found.</div>
                   ) : (
                     filteredStationMasters.map((row, index) => (
-                      <div key={row.id} className="table-row station-master-table-cols">
+                      <div 
+                        key={row.id} 
+                        className="table-row station-master-table-cols clickable-row"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleStationMasterClick(row)}
+                      >
                         <div>{index + 1}</div>
-                        <div>{row.name}</div>
+                        <div><strong>{row.name}</strong></div>
                         <div>{row.stationName}</div>
                         <div>
                           <span className="station-code-chip">{row.stationCode}</span>
@@ -2077,6 +2531,28 @@ function AOmModule({ user, onLogout }) {
                         <div>{renderCategoryBadge(row.category)}</div>
                         <div>{row.contactNumber}</div>
                         <div>{row.emailId}</div>
+                        <div>
+                          <button
+                            type="button"
+                            className="sm2-monitor-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStationMasterClick(row);
+                            }}
+                            style={{
+                              backgroundColor: "#eff6ff",
+                              color: "#2563eb",
+                              border: "1px solid #bfdbfe",
+                              padding: "4px 10px",
+                              fontSize: "12px",
+                              borderRadius: "6px",
+                              fontWeight: "600",
+                              cursor: "pointer"
+                            }}
+                          >
+                            View
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -2091,11 +2567,287 @@ function AOmModule({ user, onLogout }) {
 
               .station-master-table-cols {
                 display: grid;
-                grid-template-columns: 70px 1.2fr 1.3fr 100px 1fr 1.1fr 90px 140px 1.3fr;
+                grid-template-columns: 60px 1.2fr 1.3fr 90px 0.8fr 0.8fr 80px 120px 1.2fr 100px;
                 align-items: center;
                 gap: 10px;
               }
             `}</style>
+          </div>
+        );
+
+      case "Pointsman Under Station Master":
+        if (!selectedSMForPointsmen) return null;
+        
+        // Find pointsmen under this station
+        const stationPointsmen = aomPointsmen.filter(
+          (pm) => pm.stationCode === selectedSMForPointsmen.stationCode
+        );
+
+        // Calculate KPI summaries
+        const approvedCount = stationPointsmen.filter(p => p.approvalStatus === "Approved").length;
+        const pendingCount = stationPointsmen.filter(p => p.approvalStatus === "Pending").length;
+        const highRiskCount = stationPointsmen.filter(p => getPmRisk(p) === "High").length;
+
+        // Apply filters
+        const filteredStationPointsmen = stationPointsmen.filter((pm) => {
+          const risk = getPmRisk(pm);
+          const searchText = pointsmanSearchText.trim().toLowerCase();
+          const matchesSearch =
+            searchText.length === 0 ||
+            pm.name.toLowerCase().includes(searchText) ||
+            pm.hrmsId.toLowerCase().includes(searchText);
+            
+          const matchesRisk = pointsmanRiskFilter === "All" || risk === pointsmanRiskFilter;
+          const matchesStatus = pointsmanStatusFilter === "All" || pm.approvalStatus === pointsmanStatusFilter;
+          
+          return matchesSearch && matchesRisk && matchesStatus;
+        });
+
+        return (
+          <div className="user-management-page">
+            {selectedPointsmanForMonitoring ? (
+              renderPointsmanMonitoringDetail(selectedPointsmanForMonitoring)
+            ) : (
+              <>
+                <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                      Pointsman Management – {selectedSMForPointsmen.stationName}
+                    </h2>
+                    <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#64748b" }}>
+                      Operational directory under Station Master: <strong>{selectedSMForPointsmen.name}</strong> ({selectedSMForPointsmen.stationCode})
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="sm2-monitor-btn"
+                    onClick={() => {
+                      setActivePage("Station Masters");
+                      setSelectedSMForPointsmen(null);
+                    }}
+                    style={{
+                      backgroundColor: "#ffffff",
+                      color: "#334155",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ← Back to Station Masters
+                  </button>
+                </div>
+
+                {/* KPI Cards */}
+                <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "24px", marginTop: "20px" }}>
+                  <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#eff6ff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Users size={24} />
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Pointsmen</span>
+                      <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{stationPointsmen.length}</h3>
+                    </div>
+                  </div>
+                  <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <ShieldCheck size={24} />
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Approved Staff</span>
+                      <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#16a34a" }}>{approvedCount}</h3>
+                    </div>
+                  </div>
+                  <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <ClipboardCheck size={24} />
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pending Assessments</span>
+                      <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#2563eb" }}>{pendingCount}</h3>
+                    </div>
+                  </div>
+                  <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#fee2e2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>High Risk Staff</span>
+                      <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#dc2626" }}>{highRiskCount}</h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Toolbar */}
+                <div className="station-action-bar chart-card" style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "20px", background: "#ffffff", padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0", marginTop: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+                    <Search size={16} color="#64748b" />
+                    <input
+                      type="text"
+                      className="users-table-search"
+                      placeholder="Search by Pointsman Name / HRMS ID..."
+                      value={pointsmanSearchText}
+                      onChange={(e) => setPointsmanSearchText(e.target.value)}
+                      style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", background: "transparent" }}
+                    />
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <select 
+                      value={pointsmanRiskFilter} 
+                      onChange={(e) => setPointsmanRiskFilter(e.target.value)}
+                      style={{
+                        border: "1px solid #cbd5e1",
+                        borderRadius: "6px",
+                        padding: "6px 12px",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: "#334155",
+                        background: "#ffffff"
+                      }}
+                    >
+                      <option value="All">All Risk Levels</option>
+                      <option value="Low">Low Risk</option>
+                      <option value="Medium">Medium Risk</option>
+                      <option value="High">High Risk</option>
+                    </select>
+                    <select 
+                      value={pointsmanStatusFilter} 
+                      onChange={(e) => setPointsmanStatusFilter(e.target.value)}
+                      style={{
+                        border: "1px solid #cbd5e1",
+                        borderRadius: "6px",
+                        padding: "6px 12px",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        color: "#334155",
+                        background: "#ffffff"
+                      }}
+                    >
+                      <option value="All">All Approval Statuses</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="users-list-container">
+                  <div className="users-table-wrapper">
+                    <div className="users-table pointsman-list-table-wide">
+                      <div className="table-header pointsman-list-table-cols">
+                        <div>Sr No</div>
+                        <div>Pointsman Name</div>
+                        <div>HRMS ID</div>
+                        <div>Grade / Category</div>
+                        <div>Last Assessment Score</div>
+                        <div>Last Assessed Date</div>
+                        <div>Approval Status</div>
+                        <div>Risk Level</div>
+                        <div>Action</div>
+                      </div>
+
+                      {filteredStationPointsmen.length === 0 ? (
+                        <div className="table-empty-state">No Pointsman staff found.</div>
+                      ) : (
+                        filteredStationPointsmen.map((pm, idx) => {
+                          const cat = getPmCat(pm.lastScore);
+                          const risk = getPmRisk(pm);
+                          const isHighRisk = risk === "High";
+                          const isMedRisk = risk === "Medium";
+                          
+                          return (
+                            <div 
+                              key={pm.id} 
+                              className="table-row pointsman-list-table-cols clickable-row"
+                              onClick={() => setSelectedPointsmanForMonitoring(pm)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <div>{idx + 1}</div>
+                              <div><strong>{pm.name}</strong></div>
+                              <div>{pm.hrmsId}</div>
+                              <div>
+                                <span style={{
+                                  background: cat === "A" ? "#dcfce7" : cat === "B" ? "#dbeafe" : cat === "C" ? "#fef3c7" : "#fee2e2",
+                                  color: cat === "A" ? "#15803d" : cat === "B" ? "#1d4ed8" : cat === "C" ? "#b45309" : "#b91c1c",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  fontWeight: "700",
+                                  fontSize: "11px"
+                                }}>Category {cat}</span>
+                              </div>
+                              <div><strong>{pm.lastScore}/100</strong></div>
+                              <div>
+                                {pm.hrmsId === "PM_1001" ? "2026-03-28" : 
+                                 pm.hrmsId === "PM_1102" ? "2026-03-10" : 
+                                 pm.hrmsId === "PM_1103" ? "2026-02-15" : 
+                                 pm.hrmsId === "PM_1104" ? "2026-03-18" : 
+                                 pm.hrmsId === "PM_1105" ? "2026-01-20" : 
+                                 pm.hrmsId === "PM_1106" ? "2026-03-05" : 
+                                 pm.hrmsId === "PM_1107" ? "2026-03-20" : 
+                                 pm.hrmsId === "PM_1108" ? "2026-02-01" : "—"}
+                              </div>
+                              <div>
+                                <span className={`sm2-status-pill sm2-status-${pm.approvalStatus.toLowerCase()}`} style={{ display: "inline-block" }}>
+                                  {pm.approvalStatus}
+                                </span>
+                              </div>
+                              <div>
+                                <span style={{
+                                  background: isHighRisk ? "#fee2e2" : isMedRisk ? "#fef3c7" : "#dcfce7",
+                                  color: isHighRisk ? "#b91c1c" : isMedRisk ? "#b45309" : "#15803d",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  fontWeight: "700",
+                                  fontSize: "11px"
+                                }}>{risk}</span>
+                              </div>
+                              <div>
+                                <button
+                                  type="button"
+                                  className="sm2-monitor-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPointsmanForMonitoring(pm);
+                                  }}
+                                  style={{
+                                    backgroundColor: "#eff6ff",
+                                    color: "#2563eb",
+                                    border: "1px solid #bfdbfe",
+                                    padding: "4px 10px",
+                                    fontSize: "12px",
+                                    borderRadius: "6px",
+                                    fontWeight: "600",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  Monitor
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <style>{`
+                  .pointsman-list-table-wide {
+                    min-width: 1000px;
+                  }
+                  .pointsman-list-table-cols {
+                    display: grid;
+                    grid-template-columns: 60px 1.5fr 1fr 1.2fr 1.3fr 1.3fr 1.2fr 1fr 100px;
+                    align-items: center;
+                    gap: 10px;
+                  }
+                `}</style>
+              </>
+            )}
           </div>
         );
 
@@ -4010,9 +4762,11 @@ function AOmModule({ user, onLogout }) {
             const Icon = item.icon;
             const stationPageActive = ["Station Management", "All Stations", "Add Station", "View / Edit Station"].includes(activePage);
             const assessmentsPageActive = ["Assessments", "Pending Approvals"].includes(activePage);
+            const stationMastersActive = ["Station Masters", "Pointsman Under Station Master"].includes(activePage);
             const isActive = 
               item.label === "Station Management" ? stationPageActive : 
               item.label === "Assessments" ? assessmentsPageActive : 
+              item.label === "Station Masters" ? stationMastersActive : 
               activePage === item.label;
 
             return (
