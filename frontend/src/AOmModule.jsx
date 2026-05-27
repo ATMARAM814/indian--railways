@@ -2295,6 +2295,30 @@ function AOmModule({ user, onLogout }) {
                           <button type="button" className="action-btn" onClick={() => handleOpenTiProfile(row.id)}>
                             View
                           </button>
+                          <button
+                            type="button"
+                            className="action-btn"
+                            style={{
+                              background: localStorage.getItem("ti_exam_assigned") === "true" ? "#16a34a" : "#2563eb",
+                              color: "#fff",
+                              fontWeight: "600"
+                            }}
+                            onClick={() => {
+                              const currentStatus = localStorage.getItem("ti_exam_assigned") === "true";
+                              if (currentStatus) {
+                                localStorage.removeItem("ti_exam_assigned");
+                                alert(`Exam recalled for Traffic Inspector ${row.name || ""}.`);
+                                setTrafficInspectors(prev => prev.map(ti => ti.id === row.id ? { ...ti, assessmentStatus: "Pending" } : ti));
+                              } else {
+                                localStorage.setItem("ti_exam_assigned", "true");
+                                alert(`Exam assigned and sent to Traffic Inspector ${row.name || ""}.`);
+                                setTrafficInspectors(prev => prev.map(ti => ti.id === row.id ? { ...ti, assessmentStatus: "In Progress" } : ti));
+                              }
+                              window.dispatchEvent(new Event("storage"));
+                            }}
+                          >
+                            {localStorage.getItem("ti_exam_assigned") === "true" ? "Exam Sent ✓" : "Send Exam"}
+                          </button>
                           <button type="button" className="action-btn action-edit" onClick={() => handleOpenLinkTi(row.id)}>
                             Link Stations & SMs
                           </button>

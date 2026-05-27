@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   AlertTriangle,
   Award,
@@ -281,6 +281,55 @@ function StationMasterModule({ user, onLogout }) {
   const [pmFilter, setPmFilter]           = useState({ search:"", grade:"All", status:"All", risk:"All" });
   const [reportFilter, setReportFilter]   = useState({ search:"", grade:"All", risk:"All", sortBy:"date-desc" });
 
+  const [smList, setSmList] = useState(() => {
+    const saved = localStorage.getItem("ti_sm_list");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("ti_sm_list");
+      if (saved) setSmList(JSON.parse(saved));
+    };
+    window.addEventListener("storage", handleStorageChange);
+    handleStorageChange();
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [activeTab, pageMode]);
+
+  const [showExamModal, setShowExamModal] = useState(false);
+  const [currentExamQuestion, setCurrentExamQuestion] = useState(0);
+  const [examAnswers, setExamAnswers] = useState(Array(25).fill(null));
+  const [examSubmitted, setExamSubmitted] = useState(false);
+  const [examScore, setExamScore] = useState(0);
+
+  const SM_SAFETY_EXAM_QUESTIONS = [
+    { q: "What is the aspect of an outer stop signal in a two-aspect signaling system?", opts: ["Green", "Yellow", "Red", "Double Yellow"], ans: 2 },
+    { q: "During a track circuit failure, what paper authority is issued to authorize train movement?", opts: ["T/369(3b)", "T/806", "T/A 602", "T/D 602"], ans: 0 },
+    { q: "What whistle code must be sounded when a train passes through a station without stopping?", opts: ["Continuous short", "One long", "One long, one short", "Two short"], ans: 1 },
+    { q: "What is the maximum speed permitted for a shunting operation under normal conditions?", opts: ["15 km/h", "20 km/h", "30 km/h", "10 km/h"], ans: 0 },
+    { q: "Fouling mark lines indicate:", opts: ["Track division boundary", "Point locking position", "Safe distance clearance boundary limit", "Speed restriction end limit"], ans: 2 },
+    { q: "Periodic medical examinations (PME) for Station Masters must be completed every:", opts: ["1 Year", "2 Years", "3 Years", "4 Years"], ans: 3 },
+    { q: "A double yellow signal warns drivers to:", opts: ["Stop immediately", "Sound whistle continuously", "Prepare to stop at the next signal", "Proceed at full authorized speed"], ans: 2 },
+    { q: "When track circuiting is not provided, how is track clearance ensured?", opts: ["Visual verification by SM", "Token exchange", "Cabin clearance note", "All of the above"], ans: 3 },
+    { q: "What color flag is used to signal shunting stoppage during daytime?", opts: ["Green flag", "Yellow flag", "Red flag", "White flag"], ans: 2 },
+    { q: "Refresher training courses for SMs must be taken every:", opts: ["1 Year", "2 Years", "3 Years", "5 Years"], ans: 2 },
+    { q: "What is the meaning of a flashing red aspect in a signal?", opts: ["Proceed with caution", "Stop and proceed after 1 min", "Gate signal warning", "Track defect ahead"], ans: 1 },
+    { q: "When points are jammed, what must the SM check first?", opts: ["Point switches for obstruction", "Signal relay room", "Fuses in cabin", "Battery room voltage"], ans: 0 },
+    { q: "What is the standard shunting authority form number?", opts: ["T/511", "T/806", "T/369(3b)", "T/A 901"], ans: 1 },
+    { q: "Which class of station has points and signals interlocked?", opts: ["Class A", "Class B", "Class C", "Class D"], ans: 1 },
+    { q: "What is the maximum speed under a 'Caution Order' when no speed is specified?", opts: ["15 km/h", "30 km/h", "45 km/h", "20 km/h"], ans: 0 },
+    { q: "During train shunting, who is responsible for point locking verification?", opts: ["Pointsman Grade I", "Station Master", "Cabin Master", "Train Manager"], ans: 1 },
+    { q: "What action must be taken immediately if a block instrument failure occurs?", opts: ["Suspend shunting", "Convert to Paper Line Clear Ticket operation", "Advise driver to proceed at 10km/h", "Notify divisional engineer"], ans: 1 },
+    { q: "What aspect does a gate signal show when the gate is open to road traffic?", opts: ["Yellow aspect", "Green aspect", "Red aspect", "Flashing yellow aspect"], ans: 2 },
+    { q: "The isolation of running lines from siding lines is achieved using:", opts: ["Derailment block", "Trap point", "Sand hump", "All of the above"], ans: 3 },
+    { q: "A dead stop signal is indicated by which aspect?", opts: ["Steady Red", "Flashing Red", "Steady Yellow", "None"], ans: 0 },
+    { q: "Who authorizes shunting into a block section ahead?", opts: ["Station Master of current station", "Divisional Controller", "SM of receiving station", "Both A and C"], ans: 3 },
+    { q: "The distance from a warning board to the first stop signal is normally:", opts: ["800 meters", "1000 meters", "1200 meters", "2000 meters"], ans: 1 },
+    { q: "What is the authority form number for passing a stop signal at danger?", opts: ["T/369(3b)", "T/512", "T/A 602", "T/806"], ans: 0 },
+    { q: "Whistle code 'one long, one short, one long, one short' indicates:", opts: ["Train parting", "Alarm chain pulled", "Fire in train", "Entering tunnel"], ans: 0 },
+    { q: "In emergency track clearing, the first protection detonator is placed at:", opts: ["600 meters", "800 meters", "1200 meters", "2000 meters"], ans: 0 }
+  ];
+
   const smName = user?.name || smProfile.name;
   const smId   = user?.hrmsId || smProfile.employeeId;
 
@@ -416,8 +465,33 @@ function StationMasterModule({ user, onLogout }) {
   /* ════ RENDERERS ════ */
 
   /* ── DASHBOARD ── */
-  const renderDashboard = () => (
-    <div className="sm2-dashboard">
+  const renderDashboard = () => {
+    const myAssess = smList.find(s => s.hrmsId === smId);
+    const hasAssignedExam = myAssess && myAssess.status === "Exam Sent";
+
+    return (
+      <div className="sm2-dashboard">
+        {hasAssignedExam && (
+          <div style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", borderRadius: "14px", padding: "20px 24px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", boxShadow: "0 10px 25px rgba(124, 58, 237, 0.25)", border: "1px solid rgba(255,255,255,0.15)", position: "relative", overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📝</div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", letterSpacing: "-0.2px" }}>Safety Compliance Exam Assigned!</h3>
+                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.85)" }}>
+                  Traffic Inspector R. Khan has sent you a 25-Question Safety Compliance Knowledge Exam. Please complete it to automatically record your score.
+                </p>
+              </div>
+            </div>
+            <button className="sm2-primary-btn" style={{ background: "#ffffff", color: "#6d28d9", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontWeight: "800", padding: "10px 22px", borderRadius: "10px", border: "none", cursor: "pointer" }} onClick={() => {
+              setCurrentExamQuestion(0);
+              setExamAnswers(Array(25).fill(null));
+              setExamSubmitted(false);
+              setShowExamModal(true);
+            }}>
+              Take Exam Now →
+            </button>
+          </div>
+        )}
 
       {/* Summary Cards */}
       <div className="sm2-summary-cards">
@@ -511,6 +585,7 @@ function StationMasterModule({ user, onLogout }) {
       </div>
     </div>
   );
+};
 
   /* ── PROFILE ── */
   const renderProfile = () => (
@@ -1167,6 +1242,128 @@ function StationMasterModule({ user, onLogout }) {
           </div>
         </main>
       </div>
+
+      {/* Safety Exam Modal */}
+      {showExamModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(15,23,42,0.65)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "650px", background: "#ffffff", borderRadius: "16px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid #cbd5e1" }}>
+            <div style={{ padding: "18px 24px", background: "linear-gradient(135deg, #0d2c4d 0%, #092746 100%)", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800" }}>Safety & Rules Compliance Exam</h3>
+              <button style={{ background: "none", border: "none", color: "#94a3b8", fontSize: "22px", cursor: "pointer" }} onClick={() => {
+                if (window.confirm("Are you sure you want to exit the exam? Your progress will be lost.")) {
+                  setShowExamModal(false);
+                }
+              }}>×</button>
+            </div>
+
+            {!examSubmitted ? (
+              <div style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Progress Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", color: "#64748b", fontWeight: "700" }}>
+                  <span>QUESTION {currentExamQuestion + 1} OF 25</span>
+                  <span>{Math.round(((currentExamQuestion + 1) / 25) * 100)}% COMPLETED</span>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: "#7c3aed", width: `${((currentExamQuestion + 1) / 25) * 100}%`, transition: "width 0.3s" }} />
+                </div>
+
+                {/* Question Title */}
+                <div style={{ padding: "18px", background: "#f8fafc", border: "1.5px dashed #cbd5e1", borderRadius: "12px", minHeight: "80px" }}>
+                  <h4 style={{ margin: 0, color: "#0f172a", fontSize: "14px", lineHeight: "1.5" }}>
+                    {SM_SAFETY_EXAM_QUESTIONS[currentExamQuestion].q}
+                  </h4>
+                </div>
+
+                {/* Options */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {SM_SAFETY_EXAM_QUESTIONS[currentExamQuestion].opts.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        const answers = [...examAnswers];
+                        answers[currentExamQuestion] = idx;
+                        setExamAnswers(answers);
+                      }}
+                      style={{
+                        padding: "12px 16px",
+                        borderRadius: "10px",
+                        border: examAnswers[currentExamQuestion] === idx ? "2px solid #7c3aed" : "1.5px solid #e2e8f0",
+                        background: examAnswers[currentExamQuestion] === idx ? "#f5f3ff" : "#ffffff",
+                        color: "#0f172a",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      {String.fromCharCode(65 + idx)}. {opt}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "14px" }}>
+                  <button className="sm2-ghost-btn" style={{ padding: "8px 18px", fontSize: "12px" }} disabled={currentExamQuestion === 0} onClick={() => setCurrentExamQuestion(p=>p-1)}>
+                    Previous
+                  </button>
+                  {currentExamQuestion < 24 ? (
+                    <button className="sm2-primary-btn-sm" style={{ background: "#7c3aed", padding: "8px 18px", fontSize: "12px" }} disabled={examAnswers[currentExamQuestion] === null} onClick={() => setCurrentExamQuestion(p=>p+1)}>
+                      Next Question
+                    </button>
+                  ) : (
+                    <button className="sm2-primary-btn-sm" style={{ background: "#16a34a", padding: "8px 18px", fontSize: "12px" }} disabled={examAnswers.includes(null)} onClick={() => {
+                      let score = 0;
+                      examAnswers.forEach((ans, idx) => {
+                        if (ans === SM_SAFETY_EXAM_QUESTIONS[idx].ans) score++;
+                      });
+                      setExamScore(score);
+                      
+                      const updatedSmList = smList.map(s => {
+                        if (s.hrmsId === smId) {
+                          return { ...s, status: "Exam Taken", examScore: score };
+                        }
+                        return s;
+                      });
+                      setSmList(updatedSmList);
+                      localStorage.setItem("ti_sm_list", JSON.stringify(updatedSmList));
+                      setExamSubmitted(true);
+                    }}>
+                      Submit Safety Exam
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: "32px", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", textAlign: "center" }}>
+                <div style={{ width: "96px", height: "96px", borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "42px" }}>🎉</div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#16a34a" }}>Safety Compliance Exam Completed!</h3>
+                  <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#64748b" }}>
+                    Your safety compliance score has been successfully recorded.
+                  </p>
+                </div>
+                
+                <div style={{ padding: "14px 28px", border: "1.5px dashed #16a34a", background: "#f0fdf4", borderRadius: "12px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>MCQ Marks Obtained</div>
+                  <strong style={{ fontSize: "28px", fontWeight: "900", color: "#166534" }}>{examScore} <span style={{ fontSize: "14px", color: "#64748b", fontWeight: "600" }}>/ 25</span></strong>
+                </div>
+
+                <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+                  This score has been synchronized automatically. Traffic Inspector R. Khan can now review and lock your final assessment.
+                </p>
+
+                <button className="sm2-primary-btn" style={{ background: "#2563eb", marginTop: "10px", width: "100%", justifyContent: "center", height: "40px" }} onClick={() => setShowExamModal(false)}>
+                  Return to Dashboard
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
