@@ -857,22 +857,6 @@ function StationMasterModule({ user, onLogout }) {
 
     return (
       <div className="sdom-fade">
-        {hasAssignedExam && (
-          <div style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", borderRadius: "14px", padding: "20px 24px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", boxShadow: "0 10px 25px rgba(124, 58, 237, 0.25)", border: "1px solid rgba(255,255,255,0.15)", position: "relative", overflow: "hidden" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>📝</div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", letterSpacing: "-0.2px" }}>Safety Compliance Exam Assigned!</h3>
-                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.85)" }}>
-                  Traffic Inspector R. Khan has sent you a 25-Question Safety Compliance Knowledge Exam. Please complete it to automatically record your score.
-                </p>
-              </div>
-            </div>
-            <button className="sm2-primary-btn" style={{ background: "#ffffff", color: "#6d28d9", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontWeight: "800", padding: "10px 22px", borderRadius: "10px", border: "none", cursor: "pointer" }} onClick={startTestAttempt}>
-              Take Exam Now →
-            </button>
-          </div>
-        )}
 
         {/* Station Hero */}
         <div className="sdom-station-header" style={{ marginBottom: "24px" }}>
@@ -3088,14 +3072,7 @@ function StationMasterModule({ user, onLogout }) {
     <div className="sm2-layout">
       <header className="sm2-topbar">
         <div className="sm2-topbar-brand">
-          <div className="sm2-topbar-logo">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 3v18" />
-              <path d="M17 3v18" />
-              <path d="M5 8h14" />
-              <path d="M5 14h14" />
-            </svg>
-          </div>
+          <div className="sm2-topbar-logo" style={{ background: "#1E3A5F", color: "#ffffff", fontWeight: "800", fontSize: "0.95rem" }}>IR</div>
           <div>
             <h1>Indian Railway Evaluation System</h1>
             <p>Station Master Module</p>
