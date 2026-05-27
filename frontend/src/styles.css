@@ -5470,7 +5470,6 @@ select {
 
 /* ================================================================
    POINTSMAN MODULE â€” Premium SaaS Dashboard
-================================================================ */
 
 .pm-layout {
   display: flex;
@@ -6479,7 +6478,6 @@ select {
 
 /* ================================================================
    STATION MASTER MODULE v2 — Premium SaaS Dashboard
-================================================================ */
 
 .sm2-layout {
   display: flex;
@@ -6898,7 +6896,6 @@ select {
 
 /* ================================================================
    SM MODULE v2 — Assessment Form & My Assessment Additions
-================================================================ */
 
 /* ── Assessment sections ── */
 .sm2-assess-section {
@@ -7106,7 +7103,6 @@ select {
 
 /* ================================================================
    TRAFFIC INSPECTOR MODULE v2 -- Premium SaaS, Breathing Layout
-================================================================ */
 
 /* -- Layout shell -- */
 .ti2-layout {
@@ -7716,7 +7712,6 @@ select {
 /* ================================================================
    SHARED MODULE DESIGN SYSTEM (TM + SS) — mod- prefix
    Consistent with ti2/pm design language
-================================================================ */
 
 .mod-layout {
   display: flex; flex-direction: column; min-height: 100vh;
@@ -9811,23 +9806,4 @@ select {
 .sm2-fullscreen-btn:hover {
   background: #eff6ff !important;
   border-radius: 6px;
-}
-
-.sdom-table-modern tr:last-child td {
-  border-bottom: none;
-}
-.sdom-table-modern tr:hover td {
-  background: #f1f5f9;
-}
-.sdom-avatar {
-  width: 32px;
-  height: 32px;
-  background: #e2e8f0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #475569;
-  font-weight: 600;
-  font-size: 0.85rem;
 }

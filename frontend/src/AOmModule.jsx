@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
+  Activity,
   AlertCircle,
+  AlertTriangle,
   ArrowRightLeft,
   BarChart3,
   Building2,
@@ -8,6 +10,7 @@ import {
   ClipboardCheck,
   Cog,
   FileCheck,
+  FileDown,
   LayoutDashboard,
   LogOut,
   PlusCircle,
@@ -15,6 +18,7 @@ import {
   ShieldCheck,
   Star,
   UserCheck,
+  UserPlus,
   UserRoundSearch,
   Users
 } from "lucide-react";
@@ -30,6 +34,73 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+
+const generate96Stations = () => {
+  const divisionMap = {
+    Nagpur: ["NGP", "WR", "BD", "AK", "SEGM", "AJNI", "PLO", "DMN", "MZR", "SEG", "MKU", "JL", "CSN", "ET"],
+    Pune: ["PUNE", "LNL", "SVJR", "KK", "DAPD", "CCH", "PMP", "TGN", "DEHR", "KAD", "DD", "ANG", "KPG", "SNSI", "STR"],
+    Mumbai: ["CSMT", "BY", "DR", "CLA", "GC", "TNA", "DIVA", "DI", "KYN", "SHAD", "ABY", "AMR", "ULNR", "VLDI"],
+    Solapur: ["SUR", "KWV", "PVR", "LUR", "UMD", "BTW"],
+    Bhusawal: ["BSL", "NK", "MMR", "JL", "BAU", "KNW", "HD", "DVL"]
+  };
+
+  const stationsData = [];
+  const divisions = Object.keys(divisionMap);
+  const categories = ["A", "B", "C", "D"];
+  const risks = ["Low", "Medium", "High"];
+  const statuses = ["Approved", "Pending", "Completed"];
+  
+  const baseNames = [
+    "Nagpur Main", "Wardha Junction", "Badnera Town", "Akola Junction", "Sewagram", "Ajni Central", 
+    "Pulgaon", "Dhamangaon", "Murtajapur", "Shegaon", "Malkapur", "Jalgaon Junction", "Chalisgaon", 
+    "Itarsi Jn", "Bhopal Junction", "Dongargarh", "Gondia Jn", "Durg Jn", "Raipur Jn", "Bilaspur Jn",
+    "Pune Junction", "Lonavala", "Shivajinagar", "Khadki", "Dapodi", "Chinchwad", "Pimpri", 
+    "Taloja", "Dehu Road", "Khadala", "Daund Jn", "Ahmednagar", "Kopargaon", "Sainagar Shirdi", 
+    "Satara", "Kolhapur", "Sangli", "Miraj Jn", "Londa", "Ghatprabha",
+    "CSMT Terminal", "Byculla", "Dadar Central", "Kurla Jn", "Ghatkopar", "Thane Main", "Diva Jn", 
+    "Dombivli", "Kalyan Jn", "Shahad", "Ambivali", "Titwala", "Ulhasnagar", "Vithalwadi", "Badlapur", 
+    "Vashi", "Karjat Jn", "Igatpuri", "Bhandup", "Mulund",
+    "Solapur Jn", "Kurduvadi Jn", "Pandharpur", "Latur Town", "Osmanabad", "Barsi Town",
+    "Bhusawal Jn", "Nashik Road", "Manmad Jn", "Burhanpur", "Khandwa Jn", "Harda", "Devlali", 
+    "Khamgaon", "Pachora", "Nandurbar", "Amravati", "Chandrapur", "Ballarshah", "Wardha East",
+    "Sindi Town", "Butibori", "Kalmeshwar", "Katol", "Narkher", "Pandhurna", "Multai", "Amla Jn",
+    "Betul", "Ghoradongri", "Itarsi West", "Hoshangabad", "Budni", "Obaidullaganj", "Mandideep"
+  ];
+
+  for (let i = 0; i < 96; i++) {
+    const division = divisions[i % divisions.length];
+    const codeList = divisionMap[division];
+    const code = codeList[Math.floor(i / divisions.length) % codeList.length] + `_${10 + Math.floor(i/10)}`;
+    const name = baseNames[i % baseNames.length];
+    const completed = 200 + ((i * 17) % 600);
+    const pending = 15 + ((i * 11) % 130);
+    const avgScore = 72 + ((i * 3) % 25);
+    const category = categories[i % categories.length];
+    const riskLevel = i % 7 === 0 ? "High" : i % 3 === 0 ? "Medium" : "Low";
+    const assessmentStatus = statuses[i % statuses.length];
+    
+    const day = 10 + (i % 45);
+    const lastUpdatedDate = `2026-04-${day < 10 ? "0" + day : day}`;
+
+    stationsData.push({
+      id: `ST_${1001 + i}`,
+      stationName: name,
+      stationCode: code,
+      division,
+      zone: "CR",
+      completed,
+      pending,
+      avgScore,
+      category,
+      riskLevel,
+      assessmentStatus,
+      lastUpdatedDate
+    });
+  }
+  return stationsData;
+};
+
+const DASHBOARD_96_STATIONS = generate96Stations();
 
 const stationProgressData = [
   { station: "Nagpur", completed: 450, pending: 100 },
@@ -62,8 +133,9 @@ const sidebarItems = [
   { icon: ClipboardCheck, label: "Traffic Inspector" },
   { icon: FileCheck, label: "Assessments" },
   { icon: BarChart3, label: "Reports" },
-  { icon: Users, label: "User Management" },
-  { icon: Users, label: "Station Masters" },
+  { icon: Users, label: "Employee Management" },
+  { icon: UserPlus, label: "User Management" },
+  { icon: Building2, label: "Station Masters" },
   { icon: Cog, label: "Settings" },
   { icon: UserRoundSearch, label: "Profile" }
 ];
@@ -129,10 +201,29 @@ const initialUserFormData = {
   employeeName: "",
   hrmsId: "",
   mobileNo: "",
+  emailId: "",
   designation: "",
-  department: "",
-  userType: "",
-  reportingOfficer: ""
+  department: "Operations",
+  userType: "Employee",
+  reportingOfficer: "R. Kumar",
+  zone: "",
+  division: "",
+  stationName: "",
+  
+  // Pointsman-specific
+  reportingSm: "",
+  shift: "",
+  workLocation: "",
+
+  // SM-specific
+  smStation: "",
+  smDivision: "",
+  smZone: "",
+
+  // TI-specific
+  jurisdiction: "",
+  linkedStations: "",
+  reportingAom: ""
 };
 
 const initialFilterData = {
@@ -449,9 +540,81 @@ function AOmModule({ user, onLogout }) {
   const [activePage, setActivePage] = useState("Dashboard");
   const [selectedPeriod, setSelectedPeriod] = useState("FY 2025-26 - Q3");
   const [searchStations, setSearchStations] = useState("");
+  // Chart Zoom Modal states
+  const [isChartZoomModalOpen, setIsChartZoomModalOpen] = useState(false);
+  const [selectedChartType, setSelectedChartType] = useState("progress"); // "progress" or "score"
+  const [zoomPopupPage, setZoomPopupPage] = useState(1);
+  const [zoomPopupSearch, setZoomPopupSearch] = useState("");
+  const [zoomPopupZone, setZoomPopupZone] = useState("All");
+  const [zoomPopupDivision, setZoomPopupDivision] = useState("All");
+  const [zoomPopupStationName, setZoomPopupStationName] = useState("All");
+  const [zoomPopupStationCode, setZoomPopupStationCode] = useState("All");
+  const [zoomPopupCategory, setZoomPopupCategory] = useState("All");
+  const [zoomPopupRisk, setZoomPopupRisk] = useState("All");
+  const [zoomPopupStatus, setZoomPopupStatus] = useState("All");
+  const [zoomPopupStartDate, setZoomPopupStartDate] = useState("");
+  const [zoomPopupEndDate, setZoomPopupEndDate] = useState("");
   const [userFormData, setUserFormData] = useState(initialUserFormData);
   const [formErrors, setFormErrors] = useState({});
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      employeeName: "S. K. Sharma",
+      hrmsId: "PM_8820",
+      mobileNo: "9876543210",
+      emailId: "sksharma@rail.in",
+      designation: "Pointsman",
+      department: "Operations",
+      userType: "Employee",
+      reportingOfficer: "R. Kumar",
+      zone: "Central Railway",
+      division: "Nagpur",
+      stationName: "Nagpur Main",
+      reportingSm: "A. Patil",
+      shift: "Morning Shift (06:00 - 14:00)",
+      workLocation: "Yard",
+      status: "Active",
+      marks: 85
+    },
+    {
+      id: 2,
+      employeeName: "R. D. Jadhav",
+      hrmsId: "SM_5521",
+      mobileNo: "9876543211",
+      emailId: "rdjadhav@rail.in",
+      designation: "Station Master",
+      department: "Operations",
+      userType: "Manager",
+      reportingOfficer: "S. Deshmukh",
+      zone: "Central Railway",
+      division: "Pune",
+      stationName: "Pune Junction",
+      smStation: "Pune Junction",
+      smDivision: "Pune",
+      smZone: "Central Railway",
+      status: "Active",
+      marks: 92
+    },
+    {
+      id: 3,
+      employeeName: "A. P. Kulkarni",
+      hrmsId: "TI_2101",
+      mobileNo: "9876543212",
+      emailId: "apkulkarni@rail.in",
+      designation: "Traffic Inspector",
+      department: "Operations",
+      userType: "Manager",
+      reportingOfficer: "P. Nair",
+      zone: "Central Railway",
+      division: "Nagpur",
+      stationName: "Nagpur Main",
+      jurisdiction: "Nagpur Division",
+      linkedStations: "Nagpur Main, Wardha Junction, Sewagram",
+      reportingAom: "A. K. Sinha (AOM/G)",
+      status: "Active",
+      marks: 78
+    }
+  ]);
   const [editingUserId, setEditingUserId] = useState(null);
   const [pendingFilters, setPendingFilters] = useState(initialFilterData);
   const [appliedFilters, setAppliedFilters] = useState(initialFilterData);
@@ -465,6 +628,8 @@ function AOmModule({ user, onLogout }) {
   const [stationSearch, setStationSearch] = useState("");
   const [stationMasterSearch, setStationMasterSearch] = useState("");
   const [stationCurrentPage, setStationCurrentPage] = useState(1);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [userShiftDrafts, setUserShiftDrafts] = useState({});
 
   // States for Pointsman Under Station Master Page
   const [selectedSMForPointsmen, setSelectedSMForPointsmen] = useState(null);
@@ -472,6 +637,34 @@ function AOmModule({ user, onLogout }) {
   const [pointsmanSearchText, setPointsmanSearchText] = useState("");
   const [pointsmanRiskFilter, setPointsmanRiskFilter] = useState("All");
   const [pointsmanStatusFilter, setPointsmanStatusFilter] = useState("All");
+
+  const handleChartClick = (state, chartType) => {
+    if (state && state.activePayload && state.activePayload.length > 0) {
+      const clickedStationName = state.activePayload[0].payload.station;
+      if (clickedStationName) {
+        setZoomPopupSearch(clickedStationName);
+      }
+      setSelectedChartType(chartType);
+      setIsChartZoomModalOpen(true);
+      setZoomPopupPage(1);
+    } else {
+      setSelectedChartType(chartType);
+      setIsChartZoomModalOpen(true);
+      setZoomPopupPage(1);
+    }
+  };
+
+  const handlePieClick = (data) => {
+    if (data && data.name) {
+      const catLetter = data.name.replace("Category ", "").trim();
+      setZoomPopupCategory(catLetter);
+    } else {
+      setZoomPopupCategory("All");
+    }
+    setSelectedChartType("category");
+    setIsChartZoomModalOpen(true);
+    setZoomPopupPage(1);
+  };
 
   const aomPointsmenSeed = [
     { id: 1, hrmsId: "PM_1001", name: "Ravi Kumar", gender: "Male", age: 38, doj: "2012-04-10", basePay: "₹28,500", lastScore: 92, safetyScore: 95, totalAssessments: 12, pmeStatus: "Fit", refStatus: "Cleared", disciplinary: "None", incidents: 0, approvalStatus: "Approved", monitoringStatus: "Active", stationCode: "NGP", stationName: "Nagpur Junction" },
@@ -499,6 +692,11 @@ function AOmModule({ user, onLogout }) {
     return "Low";
   };
 
+  const handleTiViewClick = (tiRow) => {
+    setSelectedTIForStationMasters(tiRow);
+    setActivePage("Station Masters Under TI");
+  };
+
   const handleStationMasterClick = (sm) => {
     setSelectedSMForPointsmen(sm);
     setSelectedPointsmanForMonitoring(null);
@@ -507,7 +705,7 @@ function AOmModule({ user, onLogout }) {
     setPointsmanStatusFilter("All");
     setActivePage("Pointsman Under Station Master");
   };
-
+  
     const stationMastersDirectory = stations
       .filter((station) => Boolean(station.stationMasterName && station.stationMasterName.trim()))
       .map((station) => ({
@@ -532,6 +730,65 @@ function AOmModule({ user, onLogout }) {
         row.division.toLowerCase().includes(q)
       );
     });
+
+    const handleShiftStationMaster = (smName, targetStationCode) => {
+      if (!targetStationCode) return;
+      
+      const currentStation = stations.find(s => s.stationMasterName === smName);
+      if (!currentStation) return;
+      
+      const targetStationObj = stations.find(s => s.stationCode === targetStationCode);
+      const targetStationName = targetStationObj ? targetStationObj.stationName : targetStationCode;
+      
+      if (!window.confirm(`Are you sure you want to shift Station Master ${smName} from ${currentStation.stationName} to ${targetStationName}?`)) {
+        return;
+      }
+
+      setStations(prev => prev.map(s => {
+        if (s.stationCode === currentStation.stationCode) {
+          return {
+            ...s,
+            stationMasterName: "",
+            contactNumber: "",
+            emailId: ""
+          };
+        }
+        if (s.stationCode === targetStationCode) {
+          return {
+            ...s,
+            stationMasterName: smName,
+            contactNumber: currentStation.contactNumber,
+            emailId: currentStation.emailId
+          };
+        }
+        return s;
+      }));
+
+      setSmShiftDrafts(prev => {
+        const next = { ...prev };
+        delete next[smName];
+        return next;
+      });
+    };
+
+    const handleDeleteStationMaster = (smName) => {
+      if (!window.confirm(`Are you sure you want to delete Station Master ${smName}?`)) {
+        return;
+      }
+      
+      setStations(prev => prev.map(s => {
+        if (s.stationMasterName === smName) {
+          return {
+            ...s,
+            stationMasterName: "",
+            contactNumber: "",
+            emailId: ""
+          };
+        }
+        return s;
+      }));
+    };
+
   const [stationDetailId, setStationDetailId] = useState(null);
   const [isStationEditMode, setIsStationEditMode] = useState(false);
   const [tiSearch, setTiSearch] = useState("");
@@ -545,6 +802,8 @@ function AOmModule({ user, onLogout }) {
   const [tiLinkTargetId, setTiLinkTargetId] = useState(null);
   const [tiLinkDraft, setTiLinkDraft] = useState({ stations: [], sms: [] });
   const [tiShiftDrafts, setTiShiftDrafts] = useState({});
+  const [smShiftDrafts, setSmShiftDrafts] = useState({});
+  const [selectedTIForStationMasters, setSelectedTIForStationMasters] = useState(null);
   const [pendingAssessments, setPendingAssessments] = useState(initialPendingAssessments);
   const [approvedAssessments, setApprovedAssessments] = useState(initialApprovedAssessments);
   const [reportRows, setReportRows] = useState(initialReportRows);
@@ -564,6 +823,22 @@ function AOmModule({ user, onLogout }) {
     defaultAssessmentTab: "SM"
   });
   const [settingsNotice, setSettingsNotice] = useState("");
+
+  // Employee Management Page State
+  const [empSearchText, setEmpSearchText] = useState("");
+  const [empDesignationFilter, setEmpDesignationFilter] = useState("All");
+  const [empStationFilter, setEmpStationFilter] = useState("All");
+  const [empDivisionFilter, setEmpDivisionFilter] = useState("All");
+  const [empZoneFilter, setEmpZoneFilter] = useState("All");
+  const [empCategoryFilter, setEmpCategoryFilter] = useState("All");
+  const [empRiskFilter, setEmpRiskFilter] = useState("All");
+  const [empStatusFilter, setEmpStatusFilter] = useState("All");
+  const [empMonitoringFilter, setEmpMonitoringFilter] = useState("All");
+
+  const [empSortConfig, setEmpSortConfig] = useState({ key: "name", direction: "ascending" });
+  const [empCurrentPage, setEmpCurrentPage] = useState(1);
+  const [deactivatedUserIds, setDeactivatedUserIds] = useState(new Set());
+  const [empShiftDrafts, setEmpShiftDrafts] = useState({});
 
   const pageSize = 8;
   const stationPageSize = 8;
@@ -950,13 +1225,28 @@ function AOmModule({ user, onLogout }) {
 
   const validateUserForm = () => {
     const errors = {};
-    if (!userFormData.employeeName.trim()) errors.employeeName = "Employee Name is required";
-    if (!userFormData.hrmsId.trim()) errors.hrmsId = "HRMS ID is required";
-    if (!userFormData.mobileNo.trim()) errors.mobileNo = "Mobile No is required";
-    if (!userFormData.designation.trim()) errors.designation = "Designation is required";
-    if (!userFormData.department.trim()) errors.department = "Department is required";
-    if (!userFormData.userType.trim()) errors.userType = "User Type is required";
-    if (!userFormData.reportingOfficer.trim()) errors.reportingOfficer = "Reporting Officer is required";
+    if (!userFormData.employeeName || !userFormData.employeeName.trim()) errors.employeeName = "Full Name is required";
+    if (!userFormData.hrmsId || !userFormData.hrmsId.trim()) errors.hrmsId = "HRMS ID / Employee ID is required";
+    if (!userFormData.mobileNo || !userFormData.mobileNo.trim()) errors.mobileNo = "Mobile Number is required";
+    if (!userFormData.emailId || !userFormData.emailId.trim()) errors.emailId = "Email ID is required";
+    if (!userFormData.designation) errors.designation = "Role / Designation is required";
+    if (!userFormData.zone) errors.zone = "Zone is required";
+    if (!userFormData.division) errors.division = "Division is required";
+    if (!userFormData.stationName) errors.stationName = "Station Name is required";
+
+    if (userFormData.designation === "Pointsman") {
+      if (!userFormData.reportingSm || !userFormData.reportingSm.trim()) errors.reportingSm = "Reporting Station Master is required";
+      if (!userFormData.shift) errors.shift = "Shift is required";
+      if (!userFormData.workLocation || !userFormData.workLocation.trim()) errors.workLocation = "Work Location is required";
+    } else if (userFormData.designation === "Station Master") {
+      if (!userFormData.smStation) errors.smStation = "SM Station is required";
+      if (!userFormData.smDivision) errors.smDivision = "SM Division is required";
+      if (!userFormData.smZone) errors.smZone = "SM Zone is required";
+    } else if (userFormData.designation === "Traffic Inspector") {
+      if (!userFormData.jurisdiction || !userFormData.jurisdiction.trim()) errors.jurisdiction = "Jurisdiction is required";
+      if (!userFormData.linkedStations || !userFormData.linkedStations.trim()) errors.linkedStations = "Linked Stations are required";
+      if (!userFormData.reportingAom) errors.reportingAom = "Reporting AOM is required";
+    }
     return errors;
   };
 
@@ -1003,13 +1293,26 @@ function AOmModule({ user, onLogout }) {
     }
 
     setUserFormData({
-      employeeName: existing.employeeName,
-      hrmsId: existing.hrmsId,
-      mobileNo: existing.mobileNo,
-      designation: existing.designation,
-      department: existing.department,
-      userType: existing.userType,
-      reportingOfficer: existing.reportingOfficer
+      employeeName: existing.employeeName || "",
+      hrmsId: existing.hrmsId || "",
+      mobileNo: existing.mobileNo || "",
+      emailId: existing.emailId || "",
+      designation: existing.designation || "",
+      department: existing.department || "Operations",
+      userType: existing.userType || "Employee",
+      reportingOfficer: existing.reportingOfficer || "R. Kumar",
+      zone: existing.zone || "",
+      division: existing.division || "",
+      stationName: existing.stationName || "",
+      reportingSm: existing.reportingSm || "",
+      shift: existing.shift || "",
+      workLocation: existing.workLocation || "",
+      smStation: existing.smStation || "",
+      smDivision: existing.smDivision || "",
+      smZone: existing.smZone || "",
+      jurisdiction: existing.jurisdiction || "",
+      linkedStations: existing.linkedStations || "",
+      reportingAom: existing.reportingAom || ""
     });
     setEditingUserId(id);
     setFormErrors({});
@@ -1335,6 +1638,11 @@ function AOmModule({ user, onLogout }) {
   };
 
   const handleRemoveTi = (id) => {
+    const ti = trafficInspectors.find((t) => t.id === id);
+    const name = ti ? ti.name : "this Traffic Inspector";
+    if (!window.confirm(`Are you sure you want to delete ${name}?`)) {
+      return;
+    }
     setTrafficInspectors((prev) => prev.filter((ti) => ti.id !== id));
     if (selectedTiId === id) {
       setSelectedTiId(null);
@@ -1749,184 +2057,139 @@ function AOmModule({ user, onLogout }) {
 
     return (
       <div className="pointsman-monitoring-detail-wrapper" style={{ animation: "fadeIn 0.3s ease-out" }}>
+        {/* TITLE AND BACK BUTTON HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", margin: 0 }}>Pointsman Details</h2>
           <button 
             type="button" 
             className="sm2-monitor-btn"
             onClick={() => setSelectedPointsmanForMonitoring(null)}
             style={{
               backgroundColor: "#ffffff",
-              color: "#334155",
+              color: "#1d4ed8",
               border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              padding: "6px 16px",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
               gap: "6px"
             }}
           >
-            ← Back to Pointsman List
+            — Back
           </button>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>Live Operations Audit Platform</span>
         </div>
 
         {/* HERO CARD */}
         <div className="sm2-pm-hero" style={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: "24px",
-          background: "linear-gradient(135deg, #0d2c4d 0%, #163d66 100%)",
-          color: "#ffffff",
-          padding: "24px",
-          borderRadius: "16px",
-          boxShadow: "0 10px 25px -5px rgba(13, 44, 77, 0.15)",
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          color: "#0f172a",
+          padding: "20px",
+          borderRadius: "10px",
+          boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)",
           marginBottom: "24px",
-          position: "relative",
-          overflow: "hidden"
+          flexWrap: "wrap"
         }}>
-          <div className="sm2-pm-avatar" style={{
-            width: "72px",
-            height: "72px",
-            background: "rgba(255, 255, 255, 0.15)",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "28px",
-            fontWeight: "800",
-            border: "2px solid rgba(255, 255, 255, 0.25)"
-          }}>
-            {pm.name.charAt(0)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{pm.name}</h3>
-            <span style={{ fontSize: "13px", opacity: 0.85, fontWeight: "500" }}>
-              {pm.hrmsId} · Pointsman · {pm.stationName}
-            </span>
-            <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-              <span style={{
-                background: "rgba(255, 255, 255, 0.15)",
-                color: "#ffffff",
-                padding: "3px 10px",
-                borderRadius: "9999px",
-                fontSize: "11px",
-                fontWeight: "700",
-                letterSpacing: "0.2px"
-              }}>
-                Category {cat}
-              </span>
-              <span style={{
-                background: risk === "High" ? "#fee2e2" : risk === "Medium" ? "#fef3c7" : "#dcfce7",
-                color: risk === "High" ? "#b91c1c" : risk === "Medium" ? "#b45309" : "#15803d",
-                padding: "3px 10px",
-                borderRadius: "9999px",
-                fontSize: "11px",
-                fontWeight: "700"
-              }}>
-                {risk} Risk
-              </span>
-              <span style={{
-                background: pm.approvalStatus === "Approved" ? "#dcfce7" : pm.approvalStatus === "Pending" ? "#dbeafe" : "#fee2e2",
-                color: pm.approvalStatus === "Approved" ? "#15803d" : pm.approvalStatus === "Pending" ? "#1d4ed8" : "#b91c1c",
-                padding: "3px 10px",
-                borderRadius: "9999px",
-                fontSize: "11px",
-                fontWeight: "700"
-              }}>
-                {pm.approvalStatus}
-              </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <div className="sm2-pm-avatar" style={{
+              width: "54px",
+              height: "54px",
+              background: "#2563eb",
+              color: "#ffffff",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "22px",
+              fontWeight: "800"
+            }}>
+              {pm.name.charAt(0)}
+            </div>
+            <div>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>{pm.name}</h3>
+              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#64748b", fontWeight: "500" }}>
+                {pm.hrmsId} · Pointsman · {pm.stationName}
+              </p>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <span style={{
+                  background: "#dcfce7",
+                  color: "#15803d",
+                  padding: "3px 10px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: "700"
+                }}>
+                  Category {cat}
+                </span>
+                <span style={{
+                  background: "#dcfce7",
+                  color: "#15803d",
+                  padding: "3px 10px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: "700"
+                }}>
+                  {risk} Risk
+                </span>
+                <span style={{
+                  background: "#fef3c7",
+                  color: "#d97706",
+                  padding: "3px 10px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: "700"
+                }}>
+                  {pm.approvalStatus}
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* QUICK STATS */}
           <div className="sm2-pm-quick-stats" style={{
             display: "flex",
-            gap: "20px",
-            background: "rgba(255, 255, 255, 0.08)",
-            padding: "12px 20px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255, 255, 255, 0.1)"
+            gap: "36px",
+            marginRight: "20px"
           }}>
             <div style={{ textAlign: "center" }}>
-              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Latest Score</label>
-              <strong style={{ fontSize: "18px", fontWeight: "800" }}>{pm.lastScore}/100</strong>
+              <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Latest Score</span>
+              <strong style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>{pm.lastScore}/100</strong>
             </div>
             <div style={{ textAlign: "center" }}>
-              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Safety Score</label>
-              <strong style={{ fontSize: "18px", fontWeight: "800", color: "#6ee7b7" }}>{pm.safetyScore}%</strong>
+              <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Safety Score</span>
+              <strong style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>{pm.safetyScore}%</strong>
             </div>
             <div style={{ textAlign: "center" }}>
-              <label style={{ display: "block", fontSize: "9px", opacity: 0.7, fontWeight: "700", textTransform: "uppercase", marginBottom: "2px" }}>Assessments</label>
-              <strong style={{ fontSize: "18px", fontWeight: "800" }}>{pm.totalAssessments}</strong>
+              <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Assessments</span>
+              <strong style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>{pm.totalAssessments}</strong>
             </div>
           </div>
         </div>
 
         {/* DETAILS GRID */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
-          
-          {/* PERSONAL INFO */}
-          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
-            <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Users size={16} /> Employee Information
-            </h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Gender</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.gender}</dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Age</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.age} Years</dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Date of Joining</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.doj}</dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Base Pay</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>{pm.basePay}</dd>
-              </div>
-            </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+            <span style={{ fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Gender</span>
+            <span style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a", marginTop: "4px", display: "block" }}>{pm.gender}</span>
           </div>
-
-          {/* SAFETY COMPLIANCE */}
-          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
-            <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d", display: "flex", alignItems: "center", gap: "6px" }}>
-              <ShieldCheck size={16} /> Safety & Audit Compliance
-            </h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>PME Status</dt>
-                <dd style={{ margin: 0 }}>
-                  <span style={{
-                    fontSize: "12px",
-                    fontWeight: "700",
-                    color: pm.pmeStatus === "Fit" ? "#16a34a" : "#dc2626",
-                    background: pm.pmeStatus === "Fit" ? "#dcfce7" : "#fee2e2",
-                    padding: "2px 8px",
-                    borderRadius: "4px"
-                  }}>{pm.pmeStatus}</span>
-                </dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Refresher Course</dt>
-                <dd style={{ margin: 0 }}>
-                  <span style={{
-                    fontSize: "12px",
-                    fontWeight: "700",
-                    color: pm.refStatus === "Cleared" ? "#16a34a" : "#d97706",
-                    background: pm.refStatus === "Cleared" ? "#dcfce7" : "#fef3c7",
-                    padding: "2px 8px",
-                    borderRadius: "4px"
-                  }}>{pm.refStatus}</span>
-                </dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Disciplinary Action</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: pm.disciplinary === "None" ? "#16a34a" : "#dc2626", fontWeight: "700" }}>{pm.disciplinary}</dd>
-              </div>
-              <div>
-                <dt style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "2px" }}>Recorded Incidents</dt>
-                <dd style={{ margin: 0, fontSize: "14px", color: pm.incidents === 0 ? "#16a34a" : "#dc2626", fontWeight: "700" }}>{pm.incidents}</dd>
-              </div>
-            </div>
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+            <span style={{ fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Age</span>
+            <span style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a", marginTop: "4px", display: "block" }}>{pm.age} yrs</span>
+          </div>
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+            <span style={{ fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Date of Joining</span>
+            <span style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a", marginTop: "4px", display: "block" }}>{pm.doj}</span>
+          </div>
+          <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+            <span style={{ fontSize: "9px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Base Pay</span>
+            <span style={{ fontSize: "14px", fontWeight: "600", color: "#0f172a", marginTop: "4px", display: "block" }}>₹28,500</span>
           </div>
         </div>
 
@@ -1934,7 +2197,7 @@ function AOmModule({ user, onLogout }) {
         <div style={{
           background: "#ffffff",
           border: "1px solid #e2e8f0",
-          borderRadius: "14px",
+          borderRadius: "10px",
           padding: "20px",
           boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)",
           marginBottom: "24px"
@@ -1945,25 +2208,22 @@ function AOmModule({ user, onLogout }) {
             gap: "8px",
             margin: "0 0 16px 0",
             fontSize: "14px",
-            fontWeight: "700",
+            fontWeight: "750",
             color: "#0f172a",
             textTransform: "uppercase",
             letterSpacing: "0.5px"
           }}>
-            <Activity size={16} color="#0d2c4d" /> Monitoring Status
+            <Activity size={16} color="#0f172a" style={{ marginRight: "4px" }} /> Monitoring Status
           </h4>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
             {[
               { 
                 status: "Active", 
                 color: "#16a34a", 
                 bg: "#dcfce7", 
                 icon: (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" fill="#16a34a" fillOpacity="0.2" />
-                    <circle cx="12" cy="12" r="3" fill="#16a34a" />
-                  </svg>
+                  <span style={{ color: "#16a34a", marginRight: "4px", fontSize: "14px" }}>🟢</span>
                 ),
                 desc: "Available for yard operations" 
               },
@@ -1972,7 +2232,7 @@ function AOmModule({ user, onLogout }) {
                 color: "#d97706", 
                 bg: "#fef3c7", 
                 icon: (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                   </svg>
                 ),
@@ -1983,7 +2243,7 @@ function AOmModule({ user, onLogout }) {
                 color: "#64748b", 
                 bg: "#f1f5f9", 
                 icon: (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
@@ -1995,7 +2255,7 @@ function AOmModule({ user, onLogout }) {
                 color: "#dc2626", 
                 bg: "#fee2e2", 
                 icon: (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}>
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -2021,7 +2281,7 @@ function AOmModule({ user, onLogout }) {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                       <span style={{ display: "flex", alignItems: "center" }}>{item.icon}</span>
                       <span style={{
                         fontSize: "13px",
@@ -2061,52 +2321,89 @@ function AOmModule({ user, onLogout }) {
           </div>
         </div>
 
+        {/* SAFETY COMPLIANCE SECTION */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px", marginBottom: "24px" }}>
+          <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Safety Compliance</h4>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "20px" }}>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>PME Status</span>
+              <strong style={{ fontSize: "15px", fontWeight: "700", color: pm.pmeStatus === "Fit" ? "#16a34a" : "#dc2626", marginTop: "4px", display: "block" }}>{pm.pmeStatus}</strong>
+            </div>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>REF Status</span>
+              <strong style={{ fontSize: "15px", fontWeight: "700", color: pm.refStatus === "Cleared" ? "#16a34a" : "#d97706", marginTop: "4px", display: "block" }}>{pm.refStatus}</strong>
+            </div>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>Disciplinary</span>
+              <strong style={{ fontSize: "15px", fontWeight: "700", color: pm.disciplinary === "None" ? "#16a34a" : "#dc2626", marginTop: "4px", display: "block" }}>{pm.disciplinary}</strong>
+            </div>
+            <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px" }}>
+              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>Incidents</span>
+              <strong style={{ fontSize: "15px", fontWeight: "700", color: pm.incidents === 0 ? "#16a34a" : "#dc2626", marginTop: "4px", display: "block" }}>{pm.incidents === 0 ? "0 reported" : `${pm.incidents} reported`}</strong>
+            </div>
+          </div>
+          
+          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569", display: "block", marginBottom: "8px" }}>Overall Safety Compliance</span>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ flex: 1, height: "8px", background: "#e2e8f0", borderRadius: "9999px", overflow: "hidden" }}>
+                <div style={{ width: `${pm.safetyScore}%`, height: "100%", background: "#16a34a", borderRadius: "9999px" }}></div>
+              </div>
+              <span style={{ fontSize: "13px", fontWeight: "800", color: "#16a34a", marginLeft: "12px" }}>{pm.safetyScore}%</span>
+            </div>
+          </div>
+        </div>
+
         {/* HISTORICAL ASSESSMENTS TABLE */}
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "20px" }}>
-          <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0d2c4d" }}>
-            Assessment History (by SM & TI)
-          </h4>
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px" }}>
+          <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Assessment History</h4>
           <div className="users-table-wrapper" style={{ overflowX: "auto" }}>
             <table className="reports-table" style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Date</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Test Score (25)</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>TI Review Score (75)</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Total (100)</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Grade</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Status</th>
-                  <th style={{ padding: "12px", fontSize: "12px", fontWeight: "700", color: "#475569" }}>Officer Remarks</th>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Date</th>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Test Marks</th>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Add. Marks</th>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Total</th>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Grade</th>
+                  <th style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", background: "#f8fafc" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {hist.length === 0 ? (
                   <tr>
-                    <td colSpan="7" style={{ padding: "20px", textShadow: "none", textAlign: "center", color: "#64748b" }}>
+                    <td colSpan="6" style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
                       No assessment records found.
                     </td>
                   </tr>
                 ) : (
                   hist.map((h, i) => (
                     <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "12px", fontSize: "13px", fontWeight: "600", color: "#0f172a" }}>{h.date}</td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#334155" }}>{h.testMarks}/25</td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#334155" }}>{h.addMarks}/75</td>
-                      <td style={{ padding: "12px", fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{h.total}/100</td>
-                      <td style={{ padding: "12px" }}>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#334155" }}>{h.date}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#334155" }}>{h.testMarks}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#334155" }}>{h.addMarks}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{h.total}</td>
+                      <td style={{ padding: "12px 16px" }}>
                         <span style={{
                           background: h.grade === "A" ? "#dcfce7" : h.grade === "B" ? "#dbeafe" : h.grade === "C" ? "#fef3c7" : "#fee2e2",
                           color: h.grade === "A" ? "#15803d" : h.grade === "B" ? "#1d4ed8" : h.grade === "C" ? "#b45309" : "#b91c1c",
-                          padding: "2px 8px",
+                          padding: "3px 8px",
                           borderRadius: "4px",
                           fontWeight: "700",
                           fontSize: "11px"
-                        }}>Grade {h.grade}</span>
+                        }}>Cat. {h.grade}</span>
                       </td>
-                      <td style={{ padding: "12px" }}>
-                        <span className={`sm2-status-pill sm2-status-${h.approvalStatus.toLowerCase()}`}>{h.approvalStatus}</span>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{
+                          background: h.approvalStatus === "Approved" ? "#dcfce7" : h.approvalStatus === "Pending" ? "#fef3c7" : "#fee2e2",
+                          color: h.approvalStatus === "Approved" ? "#15803d" : h.approvalStatus === "Pending" ? "#d97706" : "#b91c1c",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          fontWeight: "700",
+                          fontSize: "11px"
+                        }}>{h.approvalStatus}</span>
                       </td>
-                      <td style={{ padding: "12px", fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>{h.remarks}</td>
                     </tr>
                   ))
                 )}
@@ -2118,8 +2415,1329 @@ function AOmModule({ user, onLogout }) {
     );
   };
 
+  const renderChartZoomModal = () => {
+    if (!isChartZoomModalOpen) return null;
+
+    // Filter math logic on DASHBOARD_96_STATIONS
+    const filtered = DASHBOARD_96_STATIONS.filter(st => {
+      const q = zoomPopupSearch.trim().toLowerCase();
+      const matchesSearch = !q || st.stationName.toLowerCase().includes(q) || st.stationCode.toLowerCase().includes(q);
+      
+      const matchesZone = zoomPopupZone === "All" || st.zone === zoomPopupZone;
+      const matchesDivision = zoomPopupDivision === "All" || st.division === zoomPopupDivision;
+      
+      const matchesName = zoomPopupStationName === "All" || !zoomPopupStationName.trim() || st.stationName.toLowerCase().includes(zoomPopupStationName.toLowerCase());
+      const matchesCode = zoomPopupStationCode === "All" || !zoomPopupStationCode.trim() || st.stationCode.toLowerCase().includes(zoomPopupStationCode.toLowerCase());
+      
+      const matchesCategory = zoomPopupCategory === "All" || st.category === zoomPopupCategory;
+      const matchesRisk = zoomPopupRisk === "All" || st.riskLevel === zoomPopupRisk;
+      const matchesStatus = zoomPopupStatus === "All" || st.assessmentStatus === zoomPopupStatus;
+
+      let matchesDate = true;
+      if (zoomPopupStartDate) {
+        matchesDate = matchesDate && st.lastUpdatedDate >= zoomPopupStartDate;
+      }
+      if (zoomPopupEndDate) {
+        matchesDate = matchesDate && st.lastUpdatedDate <= zoomPopupEndDate;
+      }
+
+      return matchesSearch && matchesZone && matchesDivision && matchesName && matchesCode && matchesCategory && matchesRisk && matchesStatus && matchesDate;
+    });
+
+    const itemsPerPage = 10;
+    const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+    const currentPage = Math.min(zoomPopupPage, totalPages);
+
+    const paginated = filtered.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
+    const modalChartData = paginated.map(st => ({
+      station: st.stationCode,
+      name: st.stationName,
+      completed: st.completed,
+      pending: st.pending,
+      avgScore: st.avgScore
+    }));
+
+    const catA = paginated.filter(s => s.category === "A").length;
+    const catB = paginated.filter(s => s.category === "B").length;
+    const catC = paginated.filter(s => s.category === "C").length;
+    const catD = paginated.filter(s => s.category === "D").length;
+    const totalCount = catA + catB + catC + catD;
+
+    const modalPieData = [
+      { name: "Category A", value: catA, color: "#1e40af" },
+      { name: "Category B", value: catB, color: "#5b21b6" },
+      { name: "Category C", value: catC, color: "#92400e" },
+      { name: "Category D", value: catD, color: "#9d174d" }
+    ].filter(item => item.value > 0);
+
+    const handleResetPopupFilters = () => {
+      setZoomPopupSearch("");
+      setZoomPopupZone("All");
+      setZoomPopupDivision("All");
+      setZoomPopupStationName("All");
+      setZoomPopupStationCode("All");
+      setZoomPopupCategory("All");
+      setZoomPopupRisk("All");
+      setZoomPopupStatus("All");
+      setZoomPopupStartDate("");
+      setZoomPopupEndDate("");
+      setZoomPopupPage(1);
+    };
+
+    return (
+      <div 
+        className="zoom-modal-overlay"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.75)",
+          backdropFilter: "blur(8px)",
+          zIndex: 9999,
+          overflowY: "auto",
+          display: "block",
+          padding: 0,
+          animation: "fadeIn 0.2s ease-out"
+        }}
+      >
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+        `}</style>
+        <div 
+          className="zoom-modal-container"
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: 0,
+            width: "100%",
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "none",
+            overflow: "visible",
+            border: "none",
+            animation: "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}
+        >
+          {/* Modal Header */}
+          <div 
+            style={{
+              padding: "18px 24px",
+              borderBottom: "1px solid #e2e8f0",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "#f8fafc",
+              position: "sticky",
+              top: 0,
+              zIndex: 100
+            }}
+          >
+            <div>
+              <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>
+                {selectedChartType === "progress" 
+                  ? "Station-wise Evaluation Progress" 
+                  : selectedChartType === "score" 
+                  ? "Station-wise Average Score" 
+                  : "Category Distribution"}
+              </h3>
+              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                Page {currentPage} of {totalPages} (Showing 10 stations per page out of {filtered.length} matching stations)
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setIsChartZoomModalOpen(false)}
+                style={{
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  border: "1px solid #fecaca",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }}
+              >
+                Close Zoom View
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body Container */}
+          <div style={{ flex: 1, padding: "24px", display: "flex", flexDirection: "column", gap: "20px", overflow: "visible" }}>
+            
+            {/* 1. FILTER CONTROLS GRID */}
+            <div 
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "16px"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h4 style={{ margin: 0, fontSize: "12px", fontWeight: "700", color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Operational Search & Diagnostics Filters
+                </h4>
+                <button
+                  type="button"
+                  onClick={handleResetPopupFilters}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#2563eb",
+                    fontSize: "12px",
+                    fontWeight: "750",
+                    cursor: "pointer",
+                    textDecoration: "underline"
+                  }}
+                >
+                  Reset Diagnostics Filters
+                </button>
+              </div>
+              <div 
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                  gap: "12px"
+                }}
+              >
+                {/* Search */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Quick Search</label>
+                  <input
+                    type="text"
+                    placeholder="Search name/code..."
+                    value={zoomPopupSearch}
+                    onChange={(e) => { setZoomPopupSearch(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  />
+                </div>
+
+                {/* Zone */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Zone</label>
+                  <select
+                    value={zoomPopupZone}
+                    onChange={(e) => { setZoomPopupZone(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", background: "#ffffff", color: "#334155" }}
+                  >
+                    <option value="All">All Zones</option>
+                    <option value="CR">CR (Central Rly)</option>
+                  </select>
+                </div>
+
+                {/* Division */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Division</label>
+                  <select
+                    value={zoomPopupDivision}
+                    onChange={(e) => { setZoomPopupDivision(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", background: "#ffffff", color: "#334155" }}
+                  >
+                    <option value="All">All Divisions</option>
+                    <option value="Nagpur">Nagpur</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Solapur">Solapur</option>
+                    <option value="Bhusawal">Bhusawal</option>
+                  </select>
+                </div>
+
+                {/* Station Name */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Station Name</label>
+                  <input
+                    type="text"
+                    placeholder="Filter by name..."
+                    value={zoomPopupStationName === "All" ? "" : zoomPopupStationName}
+                    onChange={(e) => { setZoomPopupStationName(e.target.value || "All"); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  />
+                </div>
+
+                {/* Station Code */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Station Code</label>
+                  <input
+                    type="text"
+                    placeholder="Filter by code..."
+                    value={zoomPopupStationCode === "All" ? "" : zoomPopupStationCode}
+                    onChange={(e) => { setZoomPopupStationCode(e.target.value || "All"); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Category</label>
+                  <select
+                    value={zoomPopupCategory}
+                    onChange={(e) => { setZoomPopupCategory(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", background: "#ffffff", color: "#334155" }}
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="A">Cat. A</option>
+                    <option value="B">Cat. B</option>
+                    <option value="C">Cat. C</option>
+                    <option value="D">Cat. D</option>
+                  </select>
+                </div>
+
+                {/* Risk Level */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Risk Level</label>
+                  <select
+                    value={zoomPopupRisk}
+                    onChange={(e) => { setZoomPopupRisk(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", background: "#ffffff", color: "#334155" }}
+                  >
+                    <option value="All">All Risks</option>
+                    <option value="Low">Low Risk</option>
+                    <option value="Medium">Medium Risk</option>
+                    <option value="High">High Risk</option>
+                  </select>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Status</label>
+                  <select
+                    value={zoomPopupStatus}
+                    onChange={(e) => { setZoomPopupStatus(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", background: "#ffffff", color: "#334155" }}
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+
+                {/* Date range start */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Start Date</label>
+                  <input
+                    type="date"
+                    value={zoomPopupStartDate}
+                    onChange={(e) => { setZoomPopupStartDate(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "5px 8px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", color: "#334155" }}
+                  />
+                </div>
+
+                {/* Date range end */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>End Date</label>
+                  <input
+                    type="date"
+                    value={zoomPopupEndDate}
+                    onChange={(e) => { setZoomPopupEndDate(e.target.value); setZoomPopupPage(1); }}
+                    style={{ width: "100%", padding: "5px 8px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px", color: "#334155" }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. DYNAMIC REAL-TIME CHART BOX */}
+            <div 
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "20px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "750", color: "#0f172a" }}>
+                  {selectedChartType === "progress" 
+                    ? "Evaluation Progress Trends (Completed vs Pending)" 
+                    : selectedChartType === "score" 
+                    ? "Average Safety Evaluation Scores (/100)" 
+                    : "Category Distribution Breakdown"}
+                </h4>
+                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                  Showing 10 stations on this page
+                </span>
+              </div>
+              
+              <div style={{ height: "260px", width: "100%" }}>
+                {selectedChartType === "category" ? (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", gap: "60px" }}>
+                    <div style={{ width: "220px", height: "220px" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={modalPieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={88}
+                            dataKey="value"
+                            label={({ name, value }) => `${name.replace("Category ", "")}: ${value}`}
+                          >
+                            {modalPieData.map((entry) => (
+                              <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${value} Station(s)`, "Count"]} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {modalPieData.map((item) => (
+                        <div key={item.name} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "700", color: "#334155" }}>
+                          <span style={{ display: "inline-block", width: "12px", height: "12px", borderRadius: "50%", backgroundColor: item.color }} />
+                          <span>{item.name}:</span>
+                          <span style={{ color: "#0f172a" }}>{item.value} Station(s) ({((item.value / (totalCount || 1)) * 100).toFixed(0)}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={modalChartData}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                      barGap={6}
+                    >
+                      <XAxis
+                        dataKey="station"
+                        tick={{ fontSize: 10, fill: "#475569" }}
+                        height={40}
+                      />
+                      <YAxis tick={{ fontSize: 10, fill: "#475569" }} domain={selectedChartType === "score" ? [0, 100] : undefined} />
+                      <Tooltip 
+                        contentStyle={{ background: "#0f172a", color: "#ffffff", borderRadius: "8px", border: "none", fontSize: "12px" }}
+                      />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: "12px" }} />
+                      {selectedChartType === "progress" ? (
+                        <>
+                          <Bar dataKey="completed" fill="#0d2948" name="Completed Evaluations" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="pending" fill="#f5ae3f" name="Pending Evaluations" radius={[4, 4, 0, 0]} />
+                        </>
+                      ) : (
+                        <Bar dataKey="avgScore" fill="#1f7a5c" name="Average Evaluation Score" radius={[4, 4, 0, 0]} />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* 3. DETAILED STATION DATA TABLE */}
+            <div 
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+              }}
+            >
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155" }}>Station Name</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155" }}>Code</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155" }}>Division</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155" }}>Zone</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155", textAlign: "right" }}>Completed</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155", textAlign: "right" }}>Pending</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155", textAlign: "right" }}>Avg. Score</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155", textAlign: "center" }}>Category</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155", textAlign: "center" }}>Risk Level</th>
+                    <th style={{ padding: "12px 16px", fontWeight: "700", color: "#334155" }}>Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.length === 0 ? (
+                    <tr>
+                      <td colSpan="10" style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
+                        No stations matching the selected diagnostics criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginated.map((st) => {
+                      const riskColor = st.riskLevel === "High" ? "#ef4444" : st.riskLevel === "Medium" ? "#ea580c" : "#16a34a";
+                      const riskBg = st.riskLevel === "High" ? "#fef2f2" : st.riskLevel === "Medium" ? "#fff7ed" : "#dcfce7";
+                      const catBg = st.category === "A" ? "#eff6ff" : st.category === "B" ? "#f5f3ff" : st.category === "C" ? "#fffbeb" : "#fdf2f8";
+                      const catColor = st.category === "A" ? "#1e40af" : st.category === "B" ? "#5b21b6" : st.category === "C" ? "#92400e" : "#9d174d";
+
+                      return (
+                        <tr key={st.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "12px 16px", fontWeight: "600", color: "#0f172a" }}>{st.stationName}</td>
+                          <td style={{ padding: "12px 16px", fontWeight: "700", color: "#475569" }}>{st.stationCode}</td>
+                          <td style={{ padding: "12px 16px", color: "#475569" }}>{st.division}</td>
+                          <td style={{ padding: "12px 16px", color: "#475569" }}>{st.zone}</td>
+                          <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: "700", color: "#0d2948" }}>{st.completed}</td>
+                          <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: "700", color: "#f5ae3f" }}>{st.pending}</td>
+                          <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: "700", color: "#1f7a5c" }}>{st.avgScore}/100</td>
+                          <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                            <span style={{ background: catBg, color: catColor, padding: "2px 8px", borderRadius: "4px", fontWeight: "700", fontSize: "11px" }}>
+                              Cat {st.category}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                            <span style={{ background: riskBg, color: riskColor, padding: "3px 8px", borderRadius: "6px", fontWeight: "700", fontSize: "11px" }}>
+                              {st.riskLevel}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "#64748b" }}>{st.lastUpdatedDate}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          {/* Modal Footer (SLIDER / TABS PAGINATION) */}
+          <div 
+            style={{
+              padding: "16px 24px",
+              borderTop: "1px solid #e2e8f0",
+              background: "#f8fafc",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}
+          >
+            <div style={{ fontSize: "13px", color: "#475569", fontWeight: "600" }}>
+              Showing {filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} stations
+            </div>
+            
+            {/* Page tabs */}
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setZoomPopupPage(p => Math.max(p - 1, 1))}
+                style={{
+                  padding: "6px 12px",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  background: "#ffffff",
+                  color: "#334155",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: currentPage === 1 ? "default" : "pointer",
+                  opacity: currentPage === 1 ? 0.5 : 1
+                }}
+              >
+                Previous
+              </button>
+
+              <div style={{ display: "flex", gap: "4px" }}>
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const pageNum = i + 1;
+                  const isActive = currentPage === pageNum;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setZoomPopupPage(pageNum)}
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        border: isActive ? "1px solid #2563eb" : "1px solid #cbd5e1",
+                        borderRadius: "6px",
+                        background: isActive ? "#2563eb" : "#ffffff",
+                        color: isActive ? "#ffffff" : "#334155",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setZoomPopupPage(p => Math.min(p + 1, totalPages))}
+                style={{
+                  padding: "6px 12px",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  background: "#ffffff",
+                  color: "#334155",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: currentPage === totalPages ? "default" : "pointer",
+                  opacity: currentPage === totalPages ? 0.5 : 1
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderEmployeeManagement = () => {
+    // 1. Dynamic Master Employee List Compilation
+    const allEmployees = [
+      ...aomPointsmen.map(p => ({
+        hrmsId: p.hrmsId,
+        name: p.name,
+        gender: p.gender,
+        age: p.age,
+        doj: p.doj,
+        basePay: p.basePay,
+        designation: "Pointsman",
+        stationName: p.stationName,
+        stationCode: p.stationCode,
+        division: p.stationCode === "NGP" ? "Nagpur" : p.stationCode === "PUNE" ? "Pune" : "Mumbai",
+        zone: "CR",
+        category: getPmCat(p.lastScore),
+        riskLevel: getPmRisk(p),
+        assessmentStatus: p.approvalStatus,
+        lastScore: p.lastScore,
+        safetyScore: p.safetyScore,
+        totalAssessments: p.totalAssessments,
+        lastAssessedDate: p.hrmsId === "PM_1001" ? "2026-03-28" : 
+                          p.hrmsId === "PM_1102" ? "2026-03-10" : 
+                          p.hrmsId === "PM_1103" ? "2026-02-15" : 
+                          p.hrmsId === "PM_1104" ? "2026-03-18" : 
+                          p.hrmsId === "PM_1105" ? "2026-01-20" : 
+                          p.hrmsId === "PM_1106" ? "2026-03-05" : 
+                          p.hrmsId === "PM_1107" ? "2026-03-20" : 
+                          p.hrmsId === "PM_1108" ? "2026-02-01" : "—",
+        monitoringStatus: deactivatedUserIds.has(p.hrmsId) ? "Deactivated" : (p.monitoringStatus || "Active")
+      })),
+      ...stationMastersDirectory.map((sm, idx) => {
+        const smHrmsId = `SM_${1001 + idx}`;
+        return {
+          hrmsId: smHrmsId,
+          name: sm.name,
+          gender: "Male",
+          age: 42,
+          doj: "2010-05-15",
+          basePay: "₹56,000",
+          designation: "Station Master",
+          stationName: sm.stationName,
+          stationCode: sm.stationCode,
+          division: sm.division,
+          zone: sm.zone || "CR",
+          category: sm.category || "A",
+          riskLevel: idx % 3 === 0 ? "Medium" : "Low",
+          assessmentStatus: idx % 2 === 0 ? "Approved" : "Pending",
+          lastScore: 85 - (idx * 4),
+          safetyScore: 92 - (idx * 2),
+          totalAssessments: 10,
+          lastAssessedDate: "2026-04-12",
+          monitoringStatus: deactivatedUserIds.has(smHrmsId) ? "Deactivated" : (idx % 3 === 0 ? "On Duty" : "Active")
+        };
+      }),
+      ...trafficInspectors.map((ti, idx) => ({
+        hrmsId: ti.employeeId,
+        name: ti.name,
+        gender: "Male",
+        age: 48,
+        doj: "2006-11-20",
+        basePay: "₹68,000",
+        designation: "Traffic Inspector",
+        stationName: "Division HQ",
+        stationCode: "HQ",
+        division: ti.division || "Nagpur",
+        zone: "CR",
+        category: ti.category || "Senior TI",
+        riskLevel: "Low",
+        assessmentStatus: ti.assessmentStatus === "Completed" ? "Approved" : "Pending",
+        lastScore: 88,
+        safetyScore: 95,
+        totalAssessments: 8,
+        lastAssessedDate: "2026-03-15",
+        monitoringStatus: deactivatedUserIds.has(ti.employeeId) ? "Deactivated" : "Active"
+      }))
+    ];
+
+    // Unique filter options computed dynamically
+    const uniqueDesignations = ["All", "Pointsman", "Station Master", "Traffic Inspector"];
+    const uniqueStations = ["All", ...Array.from(new Set(allEmployees.map(e => e.stationName)))];
+    const uniqueDivisions = ["All", "Nagpur", "Pune", "Mumbai"];
+    const uniqueZones = ["All", "CR"];
+    const uniqueCategories = ["All", "A", "B", "C", "D", "Senior TI", "TI", "Assistant TI"];
+    const uniqueRisks = ["All", "Low", "Medium", "High"];
+    const uniqueStatuses = ["All", "Approved", "Pending", "Rejected"];
+    const uniqueMonitorings = ["All", "Active", "On Duty", "Off Duty", "Absent", "Deactivated"];
+
+    // Filter math logic
+    const filteredEmployees = allEmployees.filter(emp => {
+      const q = empSearchText.trim().toLowerCase();
+      const matchesSearch = !q || emp.name.toLowerCase().includes(q) || emp.hrmsId.toLowerCase().includes(q);
+      
+      const matchesDesignation = empDesignationFilter === "All" || emp.designation === empDesignationFilter;
+      const matchesStation = empStationFilter === "All" || emp.stationName === empStationFilter;
+      const matchesDivision = empDivisionFilter === "All" || emp.division === empDivisionFilter;
+      const matchesZone = empZoneFilter === "All" || emp.zone === empZoneFilter;
+      const matchesCategory = empCategoryFilter === "All" || emp.category === empCategoryFilter;
+      const matchesRisk = empRiskFilter === "All" || emp.riskLevel === empRiskFilter;
+      const matchesStatus = empStatusFilter === "All" || emp.assessmentStatus === empStatusFilter;
+      const matchesMonitoring = empMonitoringFilter === "All" || emp.monitoringStatus === empMonitoringFilter;
+
+      return matchesSearch && matchesDesignation && matchesStation && matchesDivision && matchesZone && matchesCategory && matchesRisk && matchesStatus && matchesMonitoring;
+    });
+
+    // Summary calculations
+    const totalCount = filteredEmployees.length;
+    const activeCount = filteredEmployees.filter(e => e.monitoringStatus === "Active" || e.monitoringStatus === "On Duty").length;
+    const approvedCount = filteredEmployees.filter(e => e.assessmentStatus === "Approved").length;
+    const pendingCount = filteredEmployees.filter(e => e.assessmentStatus === "Pending").length;
+    const highRiskCount = filteredEmployees.filter(e => e.riskLevel === "High").length;
+
+    // Sorting
+    const sortedEmployees = [...filteredEmployees].sort((a, b) => {
+      if (a[empSortConfig.key] < b[empSortConfig.key]) {
+        return empSortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (a[empSortConfig.key] > b[empSortConfig.key]) {
+        return empSortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    const requestSort = (key) => {
+      let direction = 'ascending';
+      if (empSortConfig.key === key && empSortConfig.direction === 'ascending') {
+        direction = 'descending';
+      }
+      setEmpSortConfig({ key, direction });
+    };
+
+    // Pagination
+    const itemsPerPage = 8;
+    const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage);
+    const paginatedEmployees = sortedEmployees.slice(
+      (empCurrentPage - 1) * itemsPerPage,
+      empCurrentPage * itemsPerPage
+    );
+
+    const handleActionClick = (emp) => {
+      if (emp.designation === "Pointsman") {
+        const pmObj = aomPointsmen.find(p => p.hrmsId === emp.hrmsId);
+        setSelectedPointsmanForMonitoring(pmObj);
+      } else {
+        const mockPmObj = {
+          id: emp.hrmsId,
+          hrmsId: emp.hrmsId,
+          name: emp.name,
+          gender: emp.gender || "Male",
+          age: emp.age || 40,
+          doj: emp.doj || "2015-01-01",
+          basePay: emp.basePay || "₹45,000",
+          lastScore: emp.lastScore,
+          safetyScore: emp.safetyScore || 90,
+          totalAssessments: emp.totalAssessments || 10,
+          incidents: 0,
+          approvalStatus: emp.assessmentStatus,
+          monitoringStatus: emp.monitoringStatus,
+          stationCode: emp.stationCode,
+          stationName: emp.stationName
+        };
+        setSelectedPointsmanForMonitoring(mockPmObj);
+      }
+    };
+
+    const handleToggleDeactivate = (hrmsId) => {
+      setDeactivatedUserIds(prev => {
+        const next = new Set(prev);
+        if (next.has(hrmsId)) {
+          next.delete(hrmsId);
+        } else {
+          next.add(hrmsId);
+        }
+        return next;
+      });
+    };
+
+    const handleShiftEmployeeClick = (row) => {
+      const target = empShiftDrafts[row.hrmsId];
+      if (!target) return;
+
+      if (row.designation === "Pointsman") {
+        const targetStationObj = stations.find(s => s.stationCode === target);
+        const targetStationName = targetStationObj ? targetStationObj.stationName : target;
+        if (window.confirm(`Are you sure you want to shift Pointsman ${row.name} from ${row.stationName} to ${targetStationName}?`)) {
+          setAomPointsmen(prev => prev.map(p => {
+            if (p.hrmsId === row.hrmsId) {
+              return {
+                ...p,
+                stationCode: target,
+                stationName: targetStationName
+              };
+            }
+            return p;
+          }));
+          setEmpShiftDrafts(prev => {
+            const next = { ...prev };
+            delete next[row.hrmsId];
+            return next;
+          });
+          alert(`Successfully shifted Pointsman ${row.name} to ${targetStationName}`);
+        }
+      } else if (row.designation === "Station Master") {
+        handleShiftStationMaster(row.name, target);
+        setEmpShiftDrafts(prev => {
+          const next = { ...prev };
+          delete next[row.hrmsId];
+          return next;
+        });
+      } else if (row.designation === "Traffic Inspector") {
+        const ti = trafficInspectors.find(t => t.employeeId === row.hrmsId);
+        if (ti) {
+          setTrafficInspectors((prev) =>
+            prev.map((r) =>
+              r.employeeId === row.hrmsId
+                ? {
+                    ...r,
+                    jurisdiction: target,
+                    division: target
+                  }
+                : r
+            )
+          );
+          setTiNotice("TI jurisdiction updated successfully.");
+          setEmpShiftDrafts(prev => {
+            const next = { ...prev };
+            delete next[row.hrmsId];
+            return next;
+          });
+          alert(`Successfully shifted Traffic Inspector ${row.name} to ${target} Division`);
+        }
+      }
+    };
+
+    const handleResetFilters = () => {
+      setEmpSearchText("");
+      setEmpDesignationFilter("All");
+      setEmpStationFilter("All");
+      setEmpDivisionFilter("All");
+      setEmpZoneFilter("All");
+      setEmpCategoryFilter("All");
+      setEmpRiskFilter("All");
+      setEmpStatusFilter("All");
+      setEmpMonitoringFilter("All");
+      setEmpCurrentPage(1);
+    };
+
+    return (
+      <div className="user-management-page">
+        {selectedPointsmanForMonitoring ? (
+          renderPointsmanMonitoringDetail(selectedPointsmanForMonitoring)
+        ) : (
+          <>
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", margin: 0 }}>Employee Management</h2>
+                <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#64748b" }}>
+                  Unified railway workforce intelligence & real-time monitoring console
+                </p>
+              </div>
+              <button
+                type="button"
+                className="sm2-monitor-btn"
+                onClick={handleResetFilters}
+                style={{
+                  backgroundColor: "#ffffff",
+                  color: "#2563eb",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "6px",
+                  padding: "6px 12px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                Reset Filters
+              </button>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px", marginBottom: "20px", marginTop: "20px" }}>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#eff6ff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Users size={20} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "10px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Total Employees</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>{totalCount}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "10px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Active / On Duty</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#3b82f6" }}>{activeCount}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "10px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Approved Staff</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#16a34a" }}>{approvedCount}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#fef08a", color: "#a16207", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "10px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Pending Approvals</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#a16207" }}>{pendingCount}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#fee2e2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "10px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>High Risk Staff</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#dc2626" }}>{highRiskCount}</h3>
+                </div>
+              </div>
+            </div>
+
+            {/* ADVANCED FILTERS CARD */}
+            <div className="chart-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", marginBottom: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+              <h4 style={{ margin: "0 0 12px 0", fontSize: "13px", fontWeight: "700", color: "#334155", display: "flex", alignItems: "center", gap: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                🔍 Advanced Intelligence Filters
+              </h4>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
+                {/* Search */}
+                <div style={{ gridColumn: "span 2" }}>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Search Name / HRMS ID</label>
+                  <div style={{ position: "relative" }}>
+                    <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#94a3b8" }} />
+                    <input
+                      type="text"
+                      value={empSearchText}
+                      onChange={(e) => { setEmpSearchText(e.target.value); setEmpCurrentPage(1); }}
+                      placeholder="Type query..."
+                      style={{ width: "100%", padding: "6px 10px 6px 30px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Designation */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Designation</label>
+                  <select
+                    value={empDesignationFilter}
+                    onChange={(e) => { setEmpDesignationFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueDesignations.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Station */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Station</label>
+                  <select
+                    value={empStationFilter}
+                    onChange={(e) => { setEmpStationFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueStations.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Division */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Division</label>
+                  <select
+                    value={empDivisionFilter}
+                    onChange={(e) => { setEmpDivisionFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueDivisions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Zone */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Zone</label>
+                  <select
+                    value={empZoneFilter}
+                    onChange={(e) => { setEmpZoneFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueZones.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Category</label>
+                  <select
+                    value={empCategoryFilter}
+                    onChange={(e) => { setEmpCategoryFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueCategories.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Risk Level */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Risk Level</label>
+                  <select
+                    value={empRiskFilter}
+                    onChange={(e) => { setEmpRiskFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueRisks.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Assessment Status */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Assessment Status</label>
+                  <select
+                    value={empStatusFilter}
+                    onChange={(e) => { setEmpStatusFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueStatuses.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Monitoring Status */}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px" }}>Monitoring Status</label>
+                  <select
+                    value={empMonitoringFilter}
+                    onChange={(e) => { setEmpMonitoringFilter(e.target.value); setEmpCurrentPage(1); }}
+                    style={{ width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "12px" }}
+                  >
+                    {uniqueMonitorings.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* DATA TABLE */}
+            <div className="users-list-container" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+              <div className="users-table-wrapper" style={{ overflowX: "auto", maxHeight: "550px", overflowY: "auto", position: "relative" }}>
+                <table className="users-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "1400px" }}>
+                  <thead>
+                    <tr style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%)",
+                      borderBottom: "2px solid #cbd5e1",
+                      textAlign: "left",
+                      color: "#475569",
+                      fontWeight: "700",
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px"
+                    }}>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("name")}>
+                        Employee Name {empSortConfig.key === "name" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("hrmsId")}>
+                        HRMS ID {empSortConfig.key === "hrmsId" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("designation")}>
+                        Designation {empSortConfig.key === "designation" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("stationName")}>
+                        Station {empSortConfig.key === "stationName" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("division")}>
+                        Division {empSortConfig.key === "division" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("zone")}>
+                        Zone {empSortConfig.key === "zone" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("category")}>
+                        Category {empSortConfig.key === "category" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("riskLevel")}>
+                        Risk Level {empSortConfig.key === "riskLevel" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("assessmentStatus")}>
+                        Assessment {empSortConfig.key === "assessmentStatus" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("lastScore")}>
+                        Score {empSortConfig.key === "lastScore" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px" }}>Assessed Date</th>
+                      <th style={{ padding: "14px 10px", cursor: "pointer" }} onClick={() => requestSort("monitoringStatus")}>
+                        Monitoring {empSortConfig.key === "monitoringStatus" && (empSortConfig.direction === "ascending" ? "▲" : "▼")}
+                      </th>
+                      <th style={{ padding: "14px 10px", textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedEmployees.length === 0 ? (
+                      <tr>
+                        <td colSpan="13" style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
+                          No employees matched the query filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedEmployees.map((row, idx) => {
+                        const riskColor = row.riskLevel === "High" ? "#ef4444" : row.riskLevel === "Medium" ? "#ea580c" : "#16a34a";
+                        const riskBg = row.riskLevel === "High" ? "#fef2f2" : row.riskLevel === "Medium" ? "#fff7ed" : "#dcfce7";
+                        
+                        const statusColor = row.assessmentStatus === "Approved" ? "#16a34a" : row.assessmentStatus === "Pending" ? "#d97706" : "#ef4444";
+                        const statusBg = row.assessmentStatus === "Approved" ? "#dcfce7" : row.assessmentStatus === "Pending" ? "#fef3c7" : "#fee2e2";
+                        
+                        const isDeactivated = deactivatedUserIds.has(row.hrmsId);
+                        const displayMonStatus = isDeactivated ? "Deactivated" : row.monitoringStatus;
+
+                        const monColor = displayMonStatus === "Active" ? "#16a34a" : 
+                                         displayMonStatus === "On Duty" ? "#d97706" : 
+                                         displayMonStatus === "Off Duty" ? "#475569" : 
+                                         displayMonStatus === "Deactivated" ? "#64748b" : "#dc2626";
+                        const monBg = displayMonStatus === "Active" ? "#dcfce7" : 
+                                      displayMonStatus === "On Duty" ? "#fef3c7" : 
+                                      displayMonStatus === "Off Duty" ? "#f1f5f9" : 
+                                      displayMonStatus === "Deactivated" ? "#f1f5f9" : "#fee2e2";
+
+                        const draftShift = empShiftDrafts[row.hrmsId] || "";
+
+                        return (
+                          <tr key={row.hrmsId} style={{ borderBottom: "1px solid #e2e8f0", fontSize: "13px" }}>
+                            <td style={{ padding: "12px 10px", fontWeight: "700", color: "#0f172a" }}>{row.name}</td>
+                            <td style={{ padding: "12px 10px", color: "#64748b", fontWeight: "600" }}>{row.hrmsId}</td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <span style={{
+                                background: "#f8fafc",
+                                border: "1px solid #cbd5e1",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "650",
+                                color: "#334155"
+                              }}>{row.designation}</span>
+                            </td>
+                            <td style={{ padding: "12px 10px", fontWeight: "600", color: "#334155" }}>{row.stationName}</td>
+                            <td style={{ padding: "12px 10px", color: "#475569" }}>{row.division}</td>
+                            <td style={{ padding: "12px 10px", color: "#475569" }}>{row.zone}</td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <span style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontWeight: "700", fontSize: "11px" }}>
+                                {row.category}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <span style={{ background: riskBg, color: riskColor, padding: "3px 8px", borderRadius: "6px", fontWeight: "700", fontSize: "11px" }}>
+                                {row.riskLevel}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <span style={{ background: statusBg, color: statusColor, padding: "3px 8px", borderRadius: "6px", fontWeight: "700", fontSize: "11px" }}>
+                                {row.assessmentStatus}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 10px", fontWeight: "700", color: "#0f172a" }}>{row.lastScore}/100</td>
+                            <td style={{ padding: "12px 10px", color: "#64748b" }}>{row.lastAssessedDate}</td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <span style={{ background: monBg, color: monColor, padding: "3px 8px", borderRadius: "6px", fontWeight: "700", fontSize: "11px" }}>
+                                {displayMonStatus}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                              <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleActionClick(row)}
+                                  style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                                >
+                                  Profile
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDeactivate(row.hrmsId)}
+                                  style={{
+                                    background: isDeactivated ? "#f0fdf4" : "#fee2e2",
+                                    color: isDeactivated ? "#16a34a" : "#dc2626",
+                                    border: isDeactivated ? "1px solid #bbf7d0" : "1px solid #fecaca",
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    fontWeight: "700",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  {isDeactivated ? "Activate" : "Deactivate"}
+                                </button>
+                                <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                                  <select
+                                    value={draftShift}
+                                    onChange={(e) => setEmpShiftDrafts(prev => ({ ...prev, [row.hrmsId]: e.target.value }))}
+                                    style={{
+                                      padding: "3px 6px",
+                                      border: "1px solid #cbd5e1",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      background: "#ffffff",
+                                      maxWidth: "110px",
+                                      color: "#334155"
+                                    }}
+                                  >
+                                    <option value="">Shift to...</option>
+                                    {row.designation === "Pointsman" || row.designation === "Station Master" ? (
+                                      stations
+                                        .filter(s => s.stationCode !== row.stationCode)
+                                        .map(s => (
+                                          <option key={s.stationCode} value={s.stationCode}>
+                                            {s.stationCode} ({s.stationName})
+                                          </option>
+                                        ))
+                                    ) : (
+                                      ["Nagpur", "Pune", "Mumbai", "Solapur"]
+                                        .filter(div => div !== row.division)
+                                        .map(div => (
+                                          <option key={div} value={div}>
+                                            {div} Div
+                                          </option>
+                                        ))
+                                    )}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    disabled={!draftShift}
+                                    onClick={() => handleShiftEmployeeClick(row)}
+                                    style={{
+                                      background: draftShift ? "#2563eb" : "#f1f5f9",
+                                      color: draftShift ? "#ffffff" : "#94a3b8",
+                                      border: draftShift ? "1px solid #2563eb" : "1px solid #cbd5e1",
+                                      padding: "4px 8px",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      fontWeight: "700",
+                                      cursor: draftShift ? "pointer" : "default"
+                                    }}
+                                  >
+                                    Shift
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* PAGINATION CONTROLS */}
+              {totalPages > 1 && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", padding: "0 8px" }}>
+                  <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                    Showing {(empCurrentPage - 1) * itemsPerPage + 1} to {Math.min(empCurrentPage * itemsPerPage, sortedEmployees.length)} of {sortedEmployees.length} employees
+                  </div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      disabled={empCurrentPage === 1}
+                      onClick={() => setEmpCurrentPage(prev => Math.max(prev - 1, 1))}
+                      style={{ padding: "4px 10px", border: "1px solid #cbd5e1", borderRadius: "4px", background: "#ffffff", fontSize: "12px", cursor: empCurrentPage === 1 ? "default" : "pointer", opacity: empCurrentPage === 1 ? 0.5 : 1 }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setEmpCurrentPage(i + 1)}
+                        style={{
+                          padding: "4px 10px",
+                          border: empCurrentPage === i + 1 ? "1px solid #2563eb" : "1px solid #cbd5e1",
+                          borderRadius: "4px",
+                          background: empCurrentPage === i + 1 ? "#2563eb" : "#ffffff",
+                          color: empCurrentPage === i + 1 ? "#ffffff" : "#0f172a",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer"
+                        }}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={empCurrentPage === totalPages}
+                      onClick={() => setEmpCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      style={{ padding: "4px 10px", border: "1px solid #cbd5e1", borderRadius: "4px", background: "#ffffff", fontSize: "12px", cursor: empCurrentPage === totalPages ? "default" : "pointer", opacity: empCurrentPage === totalPages ? 0.5 : 1 }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const handleExportCSV = () => {
+    const headers = ["HRMS ID", "Employee Name", "Designation", "Assessment Status", "Score", "Grade", "Last Assessed"];
+    const csvRows = filteredReportRows.map(row => [
+      `"${row.hrmsId || ""}"`,
+      `"${row.name || ""}"`,
+      `"${row.designation || ""}"`,
+      `"${row.assessmentStatus || ""}"`,
+      `"${row.score || ""}"`,
+      `"${row.grade || ""}"`,
+      `"${row.lastAssessed || ""}"`
+    ]);
+    const csvContent = [headers.join(","), ...csvRows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `AOM_Employee_Reports_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const renderPageContent = () => {
     switch (activePage) {
+      case "Employee Management":
+        return renderEmployeeManagement();
+
       case "Dashboard":
         return (
           <>
@@ -2163,7 +3781,7 @@ function AOmModule({ user, onLogout }) {
                 const handleCardClick = () => {
                   if (!isClickable) return;
                   if (card.title === "TOTAL EMPLOYEES") {
-                    setActivePage("User Management");
+                    setActivePage("Employee Management");
                   } else if (card.title === "EVALUATIONS COMPLETED") {
                     setActivePage("Reports");
                   } else if (card.title === "PENDING APPROVALS") {
@@ -2200,14 +3818,29 @@ function AOmModule({ user, onLogout }) {
 
             <section className="charts-grid">
               <article className="chart-card bar-chart-card">
-                <div className="chart-header">
-                  <h3>Station-wise Evaluation Progress</h3>
-                  <input 
-                    type="text" 
-                    placeholder="Search station..." 
-                    value={searchStations}
-                    onChange={(e) => setSearchStations(e.target.value)}
-                  />
+                <div className="chart-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <h3>Station-wise Evaluation Progress</h3>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Click anywhere on chart to zoom & filter 96 stations</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleChartClick(null, "progress")}
+                    style={{
+                      background: "#0d2948",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: "0 2px 4px rgba(13, 41, 72, 0.15)"
+                    }}
+                  >
+                    View Full Screen
+                  </button>
                 </div>
                 <div className="chart-box">
                   <ResponsiveContainer width="100%" height="100%">
@@ -2215,6 +3848,8 @@ function AOmModule({ user, onLogout }) {
                       data={stationProgressData}
                       margin={{ top: 8, right: 12, left: -10, bottom: 25 }}
                       barGap={7}
+                      onClick={(state) => handleChartClick(state, "progress")}
+                      style={{ cursor: "pointer" }}
                     >
                       <XAxis
                         dataKey="station"
@@ -2244,13 +3879,38 @@ function AOmModule({ user, onLogout }) {
               </article>
 
               <article className="chart-card avg-score-card">
-                <h3>Station-wise Average Score</h3>
+                <div className="chart-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <h3>Station-wise Average Score</h3>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Click anywhere on chart to zoom & filter 96 stations</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleChartClick(null, "score")}
+                    style={{
+                      background: "#1f7a5c",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: "0 2px 4px rgba(31, 122, 92, 0.15)"
+                    }}
+                  >
+                    View Full Screen
+                  </button>
+                </div>
                 <div className="chart-box">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={stationAverageScoreData}
                       margin={{ top: 8, right: 12, left: -10, bottom: 25 }}
                       barGap={10}
+                      onClick={(state) => handleChartClick(state, "score")}
+                      style={{ cursor: "pointer" }}
                     >
                       <XAxis
                         dataKey="station"
@@ -2274,10 +3934,33 @@ function AOmModule({ user, onLogout }) {
               </article>
 
               <article className="chart-card donut-card">
-                <h3>Category Distribution</h3>
+                <div className="chart-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <h3>Category Distribution</h3>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Click anywhere on chart to zoom & filter 96 stations</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handlePieClick(null)}
+                    style={{
+                      background: "#4f46e5",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: "0 2px 4px rgba(79, 70, 229, 0.15)"
+                    }}
+                  >
+                    View Full Screen
+                  </button>
+                </div>
                 <div className="donut-box">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart style={{ cursor: "pointer" }}>
                       <Pie
                         data={categoryData}
                         cx="50%"
@@ -2286,6 +3969,7 @@ function AOmModule({ user, onLogout }) {
                         outerRadius={126}
                         dataKey="value"
                         label={({ value }) => `${value}%`}
+                        onClick={(data) => handlePieClick(data)}
                       >
                         {categoryData.map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
@@ -2297,7 +3981,7 @@ function AOmModule({ user, onLogout }) {
                 </div>
                 <div className="legend-row">
                   {categoryData.map((item) => (
-                    <div key={item.name} className="legend-item">
+                    <div key={item.name} className="legend-item" style={{ cursor: "pointer" }} onClick={() => handlePieClick({ name: item.name })}>
                       <span style={{ backgroundColor: item.color }} />
                       {item.name}
                     </div>
@@ -2532,26 +4216,55 @@ function AOmModule({ user, onLogout }) {
                         <div>{row.contactNumber}</div>
                         <div>{row.emailId}</div>
                         <div>
-                          <button
-                            type="button"
-                            className="sm2-monitor-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStationMasterClick(row);
-                            }}
-                            style={{
-                              backgroundColor: "#eff6ff",
-                              color: "#2563eb",
-                              border: "1px solid #bfdbfe",
-                              padding: "4px 10px",
-                              fontSize: "12px",
-                              borderRadius: "6px",
-                              fontWeight: "600",
-                              cursor: "pointer"
-                            }}
-                          >
-                            View
-                          </button>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <button
+                              type="button"
+                              className="sm-btn sm-btn-view"
+                              onClick={() => {
+                                handleStationMasterClick(row);
+                              }}
+                            >
+                              View
+                            </button>
+                            
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              <select
+                                className="sm-select"
+                                value={smShiftDrafts[row.name] || ""}
+                                onChange={(e) =>
+                                  setSmShiftDrafts((prev) => ({
+                                    ...prev,
+                                    [row.name]: e.target.value
+                                  }))
+                                }
+                              >
+                                <option value="">Shift to...</option>
+                                {stations
+                                  .filter(s => s.stationCode !== row.stationCode)
+                                  .map((s) => (
+                                    <option key={s.stationCode} value={s.stationCode}>
+                                      {s.stationName}
+                                    </option>
+                                  ))}
+                              </select>
+                              <button
+                                type="button"
+                                className="sm-btn sm-btn-shift"
+                                onClick={() => handleShiftStationMaster(row.name, smShiftDrafts[row.name])}
+                              >
+                                <ArrowRightLeft size={12} />
+                                Shift
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="sm-btn sm-btn-delete"
+                              onClick={() => handleDeleteStationMaster(row.name)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -2562,18 +4275,305 @@ function AOmModule({ user, onLogout }) {
 
             <style>{`
               .station-master-table-wide {
-                min-width: 1200px;
+                min-width: 1350px;
               }
 
               .station-master-table-cols {
                 display: grid;
-                grid-template-columns: 60px 1.2fr 1.3fr 90px 0.8fr 0.8fr 80px 120px 1.2fr 100px;
+                grid-template-columns: 60px 1fr 1.1fr 80px 0.7fr 0.7fr 80px 100px 1.1fr 320px;
                 align-items: center;
                 gap: 10px;
+              }
+
+              .sm-btn {
+                border: none;
+                padding: 6px 12px;
+                font-size: 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s ease;
+              }
+
+              .sm-btn-view {
+                background-color: #1d4ed8;
+                color: #ffffff;
+                box-shadow: 0 2px 4px rgba(29, 78, 216, 0.15);
+              }
+
+              .sm-btn-view:hover {
+                background-color: #1e40af;
+                transform: translateY(-1px);
+              }
+
+              .sm-btn-shift {
+                background-color: #0d9488;
+                color: #ffffff;
+              }
+
+              .sm-btn-shift:hover {
+                background-color: #0f766e;
+                transform: translateY(-1px);
+              }
+
+              .sm-btn-delete {
+                background-color: #ef4444;
+                color: #ffffff;
+              }
+
+              .sm-btn-delete:hover {
+                background-color: #dc2626;
+                transform: translateY(-1px);
+              }
+
+              .sm-select {
+                padding: 5px;
+                font-size: 11px;
+                border-radius: 6px;
+                border: 1px solid #d5dfeb;
+                background-color: #ffffff;
+                color: #374a63;
+                outline: none;
+                transition: all 0.2s ease;
+              }
+
+              .sm-select:focus {
+                border-color: #0d9488;
               }
             `}</style>
           </div>
         );
+
+      case "Station Masters Under TI": {
+        if (!selectedTIForStationMasters) return null;
+        
+        const tiSmsNames = selectedTIForStationMasters.linkedSms || [];
+        const smsForTI = stationMastersDirectory.filter(sm => tiSmsNames.includes(sm.name));
+        
+        // Find total pointsmen under these SMs
+        const smStationCodes = smsForTI.map(sm => sm.stationCode);
+        const pmForTI = aomPointsmen.filter(pm => smStationCodes.includes(pm.stationCode));
+        
+        const approvedCount = pmForTI.filter(p => p.approvalStatus === "Approved").length;
+        const highRiskCount = pmForTI.filter(p => getPmRisk(p) === "High").length;
+
+        return (
+          <div className="user-management-page">
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                  Station Masters Management – {selectedTIForStationMasters.name}
+                </h2>
+                <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#64748b" }}>
+                  Supervising operations in {selectedTIForStationMasters.jurisdiction} Division
+                </p>
+              </div>
+              <button
+                type="button"
+                className="sm2-monitor-btn"
+                onClick={() => {
+                  setActivePage("Traffic Inspector");
+                  setSelectedTIForStationMasters(null);
+                }}
+                style={{
+                  backgroundColor: "#ffffff",
+                  color: "#334155",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  padding: "6px 12px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                ← Back to Traffic Inspectors
+              </button>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "24px", marginTop: "20px" }}>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#eff6ff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Users size={24} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Station Masters</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{smsForTI.length}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#fef2f2", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Users size={24} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Pointsman</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{pmForTI.length}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Approved Assessments</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#16a34a" }}>{approvedCount}</h3>
+                </div>
+              </div>
+              <div className="metric-card" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#fff7ed", color: "#ea580c", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <span style={{ display: "block", fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>High Risk Staff</span>
+                  <h3 style={{ margin: "2px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#ea580c" }}>{highRiskCount}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="users-list-container" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.02)" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", marginBottom: "16px", paddingLeft: "8px" }}>Station Masters Directory</h3>
+              <div className="users-table-wrapper" style={{ overflowX: "auto" }}>
+                <div className="users-table" style={{ minWidth: "1000px" }}>
+                  <div className="table-header" style={{
+                    display: "grid",
+                    gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr 1fr 1fr",
+                    padding: "16px",
+                    background: "linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%)",
+                    borderBottom: "1px solid #e2e8f0",
+                    borderTopLeftRadius: "8px",
+                    borderTopRightRadius: "8px",
+                    color: "#475569",
+                    fontWeight: "700",
+                    fontSize: "12px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px"
+                  }}>
+                    <div>Station Master</div>
+                    <div>Station</div>
+                    <div>Division</div>
+                    <div>Category</div>
+                    <div>Assessment</div>
+                    <div>Risk Level</div>
+                    <div style={{ textAlign: "right" }}>Action</div>
+                  </div>
+
+                  {smsForTI.length === 0 ? (
+                    <div style={{ padding: "32px", textAlign: "center", color: "#64748b", fontSize: "14px" }}>
+                      No Station Masters found under this Traffic Inspector.
+                    </div>
+                  ) : (
+                    smsForTI.map((row, idx) => {
+                      // Mocking risk and assessment for SM
+                      const smRisk = idx % 3 === 0 ? "Medium" : "Low";
+                      const smRiskColor = smRisk === "High" ? "#ef4444" : smRisk === "Medium" ? "#ea580c" : "#16a34a";
+                      const smRiskBg = smRisk === "High" ? "#fef2f2" : smRisk === "Medium" ? "#fff7ed" : "#dcfce7";
+                      
+                      const smAss = idx % 2 === 0 ? "Completed" : "Pending";
+                      const smAssColor = smAss === "Completed" ? "#16a34a" : "#ca8a04";
+                      const smAssBg = smAss === "Completed" ? "#dcfce7" : "#fef08a";
+
+                      return (
+                        <div key={row.id || row.name} className="table-row" style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr 1fr 1fr",
+                          padding: "16px",
+                          borderBottom: "1px solid #e2e8f0",
+                          alignItems: "center",
+                          transition: "background 0.2s",
+                          cursor: "default"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          <div>
+                            <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "14px" }}>{row.name}</div>
+                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>ID: SM_{1000 + idx}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: "600", color: "#334155", fontSize: "13px" }}>{row.stationName}</div>
+                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>{row.stationCode}</div>
+                          </div>
+                          <div style={{ fontSize: "13px", color: "#475569", fontWeight: "500" }}>{row.division}</div>
+                          <div>
+                            <span style={{
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              border: "1px solid #e2e8f0"
+                            }}>
+                              {row.category}
+                            </span>
+                          </div>
+                          <div>
+                            <span style={{
+                              background: smAssBg,
+                              color: smAssColor,
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "700"
+                            }}>
+                              {smAss}
+                            </span>
+                          </div>
+                          <div>
+                            <span style={{
+                              background: smRiskBg,
+                              color: smRiskColor,
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}>
+                              <span style={{ fontSize: "10px" }}>●</span> {smRisk}
+                            </span>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <button
+                              type="button"
+                              onClick={() => handleStationMasterClick(row)}
+                              style={{
+                                background: "#eff6ff",
+                                color: "#2563eb",
+                                border: "1px solid #bfdbfe",
+                                padding: "6px 16px",
+                                borderRadius: "6px",
+                                fontSize: "13px",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "#2563eb";
+                                e.currentTarget.style.color = "#ffffff";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "#eff6ff";
+                                e.currentTarget.style.color = "#2563eb";
+                              }}
+                            >
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
       case "Pointsman Under Station Master":
         if (!selectedSMForPointsmen) return null;
@@ -2762,9 +4762,8 @@ function AOmModule({ user, onLogout }) {
                           return (
                             <div 
                               key={pm.id} 
-                              className="table-row pointsman-list-table-cols clickable-row"
-                              onClick={() => setSelectedPointsmanForMonitoring(pm)}
-                              style={{ cursor: "pointer" }}
+                              className="table-row pointsman-list-table-cols"
+                              style={{ cursor: "default" }}
                             >
                               <div>{idx + 1}</div>
                               <div><strong>{pm.name}</strong></div>
@@ -2809,19 +4808,20 @@ function AOmModule({ user, onLogout }) {
                                 <button
                                   type="button"
                                   className="sm2-monitor-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  onClick={() => {
                                     setSelectedPointsmanForMonitoring(pm);
                                   }}
                                   style={{
-                                    backgroundColor: "#eff6ff",
-                                    color: "#2563eb",
-                                    border: "1px solid #bfdbfe",
-                                    padding: "4px 10px",
+                                    backgroundColor: "#1d4ed8",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    padding: "6px 12px",
                                     fontSize: "12px",
                                     borderRadius: "6px",
-                                    fontWeight: "600",
-                                    cursor: "pointer"
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    boxShadow: "0 2px 4px rgba(29, 78, 216, 0.15)"
                                   }}
                                 >
                                   Monitor
@@ -3067,7 +5067,7 @@ function AOmModule({ user, onLogout }) {
                           </span>
                         </div>
                         <div className="table-action-cell ti-actions-cell">
-                          <button type="button" className="action-btn" onClick={() => handleOpenTiProfile(row.id)}>
+                          <button type="button" className="action-btn" onClick={() => handleTiViewClick(row)}>
                             View
                           </button>
                           <button
@@ -3120,7 +5120,7 @@ function AOmModule({ user, onLogout }) {
                             </button>
                           </div>
                           <button type="button" className="action-btn action-delete" onClick={() => handleRemoveTi(row.id)}>
-                            Remove
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -3212,81 +5212,75 @@ function AOmModule({ user, onLogout }) {
           </div>
         );
       
-      case "User Management":
+      case "User Management": {
+        const uniqueStationsList = Array.from(new Set(DASHBOARD_96_STATIONS.map(s => s.stationName))).sort();
+        
         return (
           <div className="user-management-page">
-            <div className="add-user-title-wrap">
-              <h2>ADD USER</h2>
+            <div className="add-user-title-wrap" style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+              <div style={{
+                background: "linear-gradient(135deg, #0d2c4d 0%, #1e40af 100%)",
+                width: "56px",
+                height: "56px",
+                borderRadius: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(13, 44, 77, 0.2)",
+                color: "#ffffff"
+              }}>
+                <UserPlus size={28} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#0d2c4d", letterSpacing: "-0.5px" }}>ADD NEW SYSTEM USER</h2>
+                <p className="subtitle-text" style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#64748b" }}>
+                  Role-Based Operational Staff Provisioning & Management Console
+                </p>
+              </div>
             </div>
 
             <div className="form-container structured-form-card">
               <form onSubmit={handleSubmitUser} className="user-form">
+                
+                {/* Field Group 1: General & Contact Info */}
+                <div className="form-section-header">
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0d2c4d', margin: '0 0 10px', fontSize: '15px', fontWeight: '800' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d2c4d', display: 'inline-block' }}></span>
+                    1. General & Contact Information
+                  </h4>
+                  <div className="section-divider" style={{ height: '1px', background: '#d5dfeb', marginBottom: '16px' }}></div>
+                </div>
+                
                 <div className="add-user-grid">
                   <div className="add-user-col">
                     <div className="form-group">
-                      <label>Employee Name *</label>
+                      <label>Full Name *</label>
                       <input
                         type="text"
                         name="employeeName"
                         value={userFormData.employeeName}
                         onChange={handleUserFormChange}
-                        placeholder="Enter employee name"
+                        placeholder="Enter full name (e.g. A. K. Sharma)"
                         className={formErrors.employeeName ? "error" : ""}
                       />
                       {formErrors.employeeName && <span className="error-text">{formErrors.employeeName}</span>}
                     </div>
 
                     <div className="form-group">
-                      <label>Department *</label>
-                      <select
-                        name="department"
-                        value={userFormData.department}
-                        onChange={handleUserFormChange}
-                        className={formErrors.department ? "error" : ""}
-                      >
-                        <option value="">Select Department</option>
-                        {departmentOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                      {formErrors.department && <span className="error-text">{formErrors.department}</span>}
-                    </div>
-
-                    <div className="form-group">
-                      <label>Reporting Officer *</label>
-                      <select
-                        name="reportingOfficer"
-                        value={userFormData.reportingOfficer}
-                        onChange={handleUserFormChange}
-                        className={formErrors.reportingOfficer ? "error" : ""}
-                      >
-                        <option value="">Select Reporting Officer</option>
-                        {reportingOfficerOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                      {formErrors.reportingOfficer && <span className="error-text">{formErrors.reportingOfficer}</span>}
-                    </div>
-                  </div>
-
-                  <div className="add-user-col">
-                    <div className="form-group">
-                      <label>HRMS ID *</label>
+                      <label>HRMS ID / Employee ID *</label>
                       <input
                         type="text"
                         name="hrmsId"
                         value={userFormData.hrmsId}
                         onChange={handleUserFormChange}
-                        placeholder="Enter HRMS ID"
+                        placeholder="Enter unique ID (e.g. PM_8820)"
                         className={formErrors.hrmsId ? "error" : ""}
                       />
                       {formErrors.hrmsId && <span className="error-text">{formErrors.hrmsId}</span>}
                     </div>
+                  </div>
 
+                  <div className="add-user-col">
                     <div className="form-group">
                       <label>Mobile Number *</label>
                       <input
@@ -3294,21 +5288,47 @@ function AOmModule({ user, onLogout }) {
                         name="mobileNo"
                         value={userFormData.mobileNo}
                         onChange={handleUserFormChange}
-                        placeholder="Enter mobile number"
+                        placeholder="Enter 10-digit mobile number"
                         className={formErrors.mobileNo ? "error" : ""}
                       />
                       {formErrors.mobileNo && <span className="error-text">{formErrors.mobileNo}</span>}
                     </div>
 
                     <div className="form-group">
-                      <label>Designation *</label>
+                      <label>Email ID *</label>
+                      <input
+                        type="email"
+                        name="emailId"
+                        value={userFormData.emailId}
+                        onChange={handleUserFormChange}
+                        placeholder="Enter email address (e.g. user@rail.in)"
+                        className={formErrors.emailId ? "error" : ""}
+                      />
+                      {formErrors.emailId && <span className="error-text">{formErrors.emailId}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Field Group 2: Designation & Station Placement */}
+                <div className="form-section-header" style={{ marginTop: '24px' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0d2c4d', margin: '0 0 10px', fontSize: '15px', fontWeight: '800' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d2c4d', display: 'inline-block' }}></span>
+                    2. Designation & Station Placement Setup
+                  </h4>
+                  <div className="section-divider" style={{ height: '1px', background: '#d5dfeb', marginBottom: '16px' }}></div>
+                </div>
+
+                <div className="add-user-grid">
+                  <div className="add-user-col">
+                    <div className="form-group">
+                      <label>Role / Designation *</label>
                       <select
                         name="designation"
                         value={userFormData.designation}
                         onChange={handleUserFormChange}
                         className={formErrors.designation ? "error" : ""}
                       >
-                        <option value="">Select Designation</option>
+                        <option value="">Select Role</option>
                         {designationOptions.map((option) => (
                           <option key={option} value={option}>
                             {option}
@@ -3319,28 +5339,254 @@ function AOmModule({ user, onLogout }) {
                     </div>
 
                     <div className="form-group">
-                      <label>User Type *</label>
+                      <label>Railway Zone *</label>
                       <select
-                        name="userType"
-                        value={userFormData.userType}
+                        name="zone"
+                        value={userFormData.zone}
                         onChange={handleUserFormChange}
-                        className={formErrors.userType ? "error" : ""}
+                        className={formErrors.zone ? "error" : ""}
                       >
-                        <option value="">Select User Type</option>
-                        {userTypeOptions.map((option) => (
+                        <option value="">Select Zone</option>
+                        {stationZoneOptions.map((option) => (
                           <option key={option} value={option}>
                             {option}
                           </option>
                         ))}
                       </select>
-                      {formErrors.userType && <span className="error-text">{formErrors.userType}</span>}
+                      {formErrors.zone && <span className="error-text">{formErrors.zone}</span>}
+                    </div>
+                  </div>
+
+                  <div className="add-user-col">
+                    <div className="form-group">
+                      <label>Division *</label>
+                      <select
+                        name="division"
+                        value={userFormData.division}
+                        onChange={handleUserFormChange}
+                        className={formErrors.division ? "error" : ""}
+                      >
+                        <option value="">Select Division</option>
+                        {stationDivisionOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      {formErrors.division && <span className="error-text">{formErrors.division}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Station Name *</label>
+                      <select
+                        name="stationName"
+                        value={userFormData.stationName}
+                        onChange={handleUserFormChange}
+                        className={formErrors.stationName ? "error" : ""}
+                      >
+                        <option value="">Select Station</option>
+                        {uniqueStationsList.map((station) => (
+                          <option key={station} value={station}>
+                            {station}
+                          </option>
+                        ))}
+                      </select>
+                      {formErrors.stationName && <span className="error-text">{formErrors.stationName}</span>}
                     </div>
                   </div>
                 </div>
 
-                <div className="add-user-actions">
-                  <button type="submit" className="submit-btn">
-                    {editingUserId ? "Update" : "Submit"}
+                {/* Field Group 3: Dynamic Role-Based Custom Operational Profile */}
+                {userFormData.designation === "Pointsman" && (
+                  <div className="role-specific-section pointsman-box animate-fade-in" style={{ marginTop: '24px', padding: '18px', background: '#f0f7ff', border: '1px solid #c2e0ff', borderRadius: '10px' }}>
+                    <div className="form-section-header">
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0d2c4d', margin: '0 0 10px', fontSize: '14px', fontWeight: '800' }}>
+                        Pointsman Operational Setup
+                      </h4>
+                      <div className="section-divider" style={{ height: '1px', backgroundColor: '#c2e0ff', marginBottom: '16px' }}></div>
+                    </div>
+                    <div className="add-user-grid">
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Reporting Station Master *</label>
+                          <input
+                            type="text"
+                            name="reportingSm"
+                            value={userFormData.reportingSm}
+                            onChange={handleUserFormChange}
+                            placeholder="Station Master Name"
+                            className={formErrors.reportingSm ? "error" : ""}
+                          />
+                          {formErrors.reportingSm && <span className="error-text">{formErrors.reportingSm}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Work Location Setup *</label>
+                          <select
+                            name="workLocation"
+                            value={userFormData.workLocation}
+                            onChange={handleUserFormChange}
+                            className={formErrors.workLocation ? "error" : ""}
+                          >
+                            <option value="">Select Location</option>
+                            <option value="Yard">Yard Area</option>
+                            <option value="Cabin A">Cabin A</option>
+                            <option value="Cabin B">Cabin B</option>
+                            <option value="Platform Area">Platform Area</option>
+                            <option value="Level Crossing Gate">Level Crossing Gate</option>
+                          </select>
+                          {formErrors.workLocation && <span className="error-text">{formErrors.workLocation}</span>}
+                        </div>
+                      </div>
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Assigned Shift *</label>
+                          <select
+                            name="shift"
+                            value={userFormData.shift}
+                            onChange={handleUserFormChange}
+                            className={formErrors.shift ? "error" : ""}
+                          >
+                            <option value="">Select Shift</option>
+                            <option value="Morning Shift (06:00 - 14:00)">Morning Shift (06:00 - 14:00)</option>
+                            <option value="Evening Shift (14:00 - 22:00)">Evening Shift (14:00 - 22:00)</option>
+                            <option value="Night Shift (22:00 - 06:00)">Night Shift (22:00 - 06:00)</option>
+                            <option value="General Shift (09:00 - 18:00)">General Shift (09:00 - 18:00)</option>
+                          </select>
+                          {formErrors.shift && <span className="error-text">{formErrors.shift}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {userFormData.designation === "Station Master" && (
+                  <div className="role-specific-section sm-box animate-fade-in" style={{ marginTop: '24px', padding: '18px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '10px' }}>
+                    <div className="form-section-header">
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#065f46', margin: '0 0 10px', fontSize: '14px', fontWeight: '800' }}>
+                        Station Master Operational Setup
+                      </h4>
+                      <div className="section-divider" style={{ height: '1px', backgroundColor: '#a7f3d0', marginBottom: '16px' }}></div>
+                    </div>
+                    <div className="add-user-grid">
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Operational Station *</label>
+                          <select
+                            name="smStation"
+                            value={userFormData.smStation}
+                            onChange={handleUserFormChange}
+                            className={formErrors.smStation ? "error" : ""}
+                          >
+                            <option value="">Select Operational Station</option>
+                            {uniqueStationsList.map((station) => (
+                              <option key={station} value={station}>
+                                {station}
+                              </option>
+                            ))}
+                          </select>
+                          {formErrors.smStation && <span className="error-text">{formErrors.smStation}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Operational Zone *</label>
+                          <select
+                            name="smZone"
+                            value={userFormData.smZone}
+                            onChange={handleUserFormChange}
+                            className={formErrors.smZone ? "error" : ""}
+                          >
+                            <option value="">Select Zone</option>
+                            {stationZoneOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          {formErrors.smZone && <span className="error-text">{formErrors.smZone}</span>}
+                        </div>
+                      </div>
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Operational Division *</label>
+                          <select
+                            name="smDivision"
+                            value={userFormData.smDivision}
+                            onChange={handleUserFormChange}
+                            className={formErrors.smDivision ? "error" : ""}
+                          >
+                            <option value="">Select Division</option>
+                            {stationDivisionOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          {formErrors.smDivision && <span className="error-text">{formErrors.smDivision}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {userFormData.designation === "Traffic Inspector" && (
+                  <div className="role-specific-section ti-box animate-fade-in" style={{ marginTop: '24px', padding: '18px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px' }}>
+                    <div className="form-section-header">
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92400e', margin: '0 0 10px', fontSize: '14px', fontWeight: '800' }}>
+                        Traffic Inspector Operational Setup
+                      </h4>
+                      <div className="section-divider" style={{ height: '1px', backgroundColor: '#fde68a', marginBottom: '16px' }}></div>
+                    </div>
+                    <div className="add-user-grid">
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Jurisdiction Division *</label>
+                          <input
+                            type="text"
+                            name="jurisdiction"
+                            value={userFormData.jurisdiction}
+                            onChange={handleUserFormChange}
+                            placeholder="Enter Jurisdiction (e.g. Nagpur Division)"
+                            className={formErrors.jurisdiction ? "error" : ""}
+                          />
+                          {formErrors.jurisdiction && <span className="error-text">{formErrors.jurisdiction}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Reporting AOM *</label>
+                          <select
+                            name="reportingAom"
+                            value={userFormData.reportingAom}
+                            onChange={handleUserFormChange}
+                            className={formErrors.reportingAom ? "error" : ""}
+                          >
+                            <option value="">Select AOM</option>
+                            <option value="A. K. Sinha (AOM/G)">A. K. Sinha (AOM/G)</option>
+                            <option value="M. K. Nair (AOM/Safety)">M. K. Nair (AOM/Safety)</option>
+                            <option value="R. S. Prasad (AOM/Chg)">R. S. Prasad (AOM/Chg)</option>
+                            <option value="P. K. Verma (Sr. DOM)">P. K. Verma (Sr. DOM)</option>
+                          </select>
+                          {formErrors.reportingAom && <span className="error-text">{formErrors.reportingAom}</span>}
+                        </div>
+                      </div>
+                      <div className="add-user-col">
+                        <div className="form-group">
+                          <label>Linked Stations under supervision *</label>
+                          <input
+                            type="text"
+                            name="linkedStations"
+                            value={userFormData.linkedStations}
+                            onChange={handleUserFormChange}
+                            placeholder="E.g. Nagpur Main, Wardha Jn, Sewagram"
+                            className={formErrors.linkedStations ? "error" : ""}
+                          />
+                          {formErrors.linkedStations && <span className="error-text">{formErrors.linkedStations}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="add-user-actions" style={{ marginTop: '24px' }}>
+                  <button type="submit" className="submit-btn" style={{ padding: '12px 36px', fontSize: '14px' }}>
+                    {editingUserId ? "🔒 UPDATE USER ACCOUNT" : "👤 ADD USER ACCOUNT"}
                   </button>
                 </div>
               </form>
@@ -3409,7 +5655,7 @@ function AOmModule({ user, onLogout }) {
 
             <div className="users-list-container">
               <div className="users-table-toolbar">
-                <h3>User Management List</h3>
+                <h3>System User Directory</h3>
                 <input
                   type="text"
                   className="users-table-search"
@@ -3423,38 +5669,122 @@ function AOmModule({ user, onLogout }) {
               </div>
 
               <div className="users-table-wrapper">
-                <div className="users-table users-table-wide">
-                  <div className="table-header table-cols-10">
+                <div className="users-table users-table-wide" style={{ minWidth: '1280px' }}>
+                  <div className="table-header" style={{ display: 'grid', gridTemplateColumns: '60px 1.8fr 1.2fr 1.8fr 1.5fr 1.2fr 3fr' }}>
                     <div>Sr No</div>
-                    <div>Name</div>
-                    <div>HRMS ID</div>
-                    <div>Mobile No</div>
+                    <div>Employee Profile</div>
                     <div>Designation</div>
-                    <div>Department</div>
-                    <div>User Type</div>
-                    <div>Reporting Officer</div>
-                    <div>No. of Marks</div>
-                    <div>Actions</div>
+                    <div>Appointed</div>
+                    <div>Contact Info</div>
+                    <div>Account Status</div>
+                    <div style={{ textAlign: 'center' }}>Actions</div>
                   </div>
 
                   {pagedUsers.length === 0 ? (
-                    <div className="table-empty-state">No users found.</div>
+                    <div className="table-empty-state">No user accounts match criteria.</div>
                   ) : (
                     pagedUsers.map((row, idx) => (
-                      <div key={row.id} className="table-row table-cols-10">
+                      <div key={row.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: '60px 1.8fr 1.2fr 1.8fr 1.5fr 1.2fr 3fr', alignItems: 'center' }}>
                         <div>{(currentPage - 1) * pageSize + idx + 1}</div>
-                        <div>{row.employeeName}</div>
-                        <div>{row.hrmsId}</div>
-                        <div>{row.mobileNo}</div>
-                        <div>{row.designation}</div>
-                        <div>{row.department}</div>
-                        <div>{row.userType}</div>
-                        <div>{row.reportingOfficer}</div>
-                        <div>{row.marks ?? 0}</div>
-                        <div className="table-action-cell">
+                        <div>
+                          <button
+                            type="button"
+                            className="ti-name-link"
+                            onClick={() => setSelectedUserProfile(row)}
+                            style={{ display: 'block', textDecoration: 'underline', color: '#0d2c4d', fontSize: '13px', fontWeight: '800' }}
+                          >
+                            {row.employeeName}
+                          </button>
+                          <span style={{ fontSize: '11px', color: '#64748b' }}>HRMS: {row.hrmsId}</span>
+                        </div>
+                        <div>
+                          <span style={{ padding: '4px 8px', borderRadius: '4px', background: row.designation === "Pointsman" ? '#eff6ff' : row.designation === "Station Master" ? '#ecfdf5' : '#fffbeb', color: row.designation === "Pointsman" ? '#1d4ed8' : row.designation === "Station Master" ? '#047857' : '#b45309', fontWeight: '700', fontSize: '11px' }}>
+                            {row.designation}
+                          </span>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: '500' }}>{row.stationName}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{row.division} / {row.zone === "Central Railway" ? "CR" : row.zone}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px' }}>{row.mobileNo}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{row.emailId || "No Email"}</div>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            className={row.status === "Inactive" ? "status-inactive-pill" : "status-active-pill"}
+                            onClick={() => {
+                              setUsers((prev) =>
+                                prev.map((u) =>
+                                  u.id === row.id
+                                    ? { ...u, status: u.status === "Inactive" ? "Active" : "Inactive" }
+                                    : u
+                                )
+                              );
+                            }}
+                            style={{ cursor: 'pointer', border: '0', fontSize: '11px', padding: '4px 10px', borderRadius: '12px', fontWeight: '700' }}
+                          >
+                            {row.status || "Active"}
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <button type="button" className="action-btn" onClick={() => setSelectedUserProfile(row)}>
+                            Profile
+                          </button>
+                          
                           <button type="button" className="action-btn action-edit" onClick={() => handleEditUser(row.id)}>
                             Edit
                           </button>
+
+                          <div className="ti-shift-inline" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <select
+                              value={userShiftDrafts[row.id] || ""}
+                              onChange={(e) =>
+                                setUserShiftDrafts((prev) => ({
+                                  ...prev,
+                                  [row.id]: e.target.value
+                                }))
+                              }
+                              style={{ height: '30px', border: '1px solid #d1dce8', borderRadius: '6px', fontSize: '11px', padding: '0 4px', background: '#fff' }}
+                            >
+                              <option value="">Shift Div...</option>
+                              {stationDivisionOptions.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className="action-btn"
+                              onClick={() => {
+                                const newDiv = userShiftDrafts[row.id];
+                                if (!newDiv) {
+                                  alert("Please select a division to shift.");
+                                  return;
+                                }
+                                setUsers((prev) =>
+                                  prev.map((u) =>
+                                    u.id === row.id
+                                      ? {
+                                          ...u,
+                                          division: newDiv,
+                                          smDivision: newDiv,
+                                          jurisdiction: newDiv + " Division"
+                                        }
+                                      : u
+                                  )
+                                );
+                                alert(`Successfully shifted ${row.employeeName} to ${newDiv} Division.`);
+                              }}
+                              style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '4px 8px' }}
+                            >
+                              <ArrowRightLeft size={12} />
+                              Shift
+                            </button>
+                          </div>
+
                           <button type="button" className="action-btn action-delete" onClick={() => handleDeleteUser(row.id)}>
                             Delete
                           </button>
@@ -3477,8 +5807,76 @@ function AOmModule({ user, onLogout }) {
                 </button>
               </div>
             </div>
+
+            {/* Premium User Profile View Detail Card */}
+            {selectedUserProfile && (
+              <div className="chart-card ti-profile-card animate-fade-in" style={{ marginTop: '20px', borderTop: '4px solid #0d2c4d', backgroundColor: '#fcfdfe' }}>
+                <div className="ti-profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#0d2c4d', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: '800', fontSize: '16px' }}>
+                      {selectedUserProfile.employeeName?.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '800', color: '#0d2c4d' }}>
+                        {selectedUserProfile.employeeName}
+                      </h3>
+                      <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>HRMS ID: {selectedUserProfile.hrmsId} | Department: {selectedUserProfile.department || "Operations"}</p>
+                    </div>
+                  </div>
+                  <button type="button" className="action-btn" onClick={() => setSelectedUserProfile(null)} style={{ background: '#64748b', color: '#fff' }}>
+                    Close Profile
+                  </button>
+                </div>
+
+                <div className="ti-profile-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', padding: '15px 0' }}>
+                  <div><strong>Designation:</strong> <span style={{ color: '#1d4ed8', fontWeight: '700' }}>{selectedUserProfile.designation}</span></div>
+                  <div><strong>Mobile No:</strong> {selectedUserProfile.mobileNo}</div>
+                  <div><strong>Email ID:</strong> {selectedUserProfile.emailId || "N/A"}</div>
+                  <div><strong>Account Status:</strong> <span style={{ color: selectedUserProfile.status === "Inactive" ? '#ef4444' : '#10b981', fontWeight: '700' }}>{selectedUserProfile.status || "Active"}</span></div>
+                  
+                  <div><strong>Current Zone:</strong> {selectedUserProfile.zone || "N/A"}</div>
+                  <div><strong>Current Division:</strong> {selectedUserProfile.division || "N/A"}</div>
+                  <div><strong>Current Station:</strong> {selectedUserProfile.stationName || "N/A"}</div>
+                  <div><strong>Reporting Officer:</strong> {selectedUserProfile.reportingOfficer || "N/A"}</div>
+                </div>
+
+                {/* Role Specific details */}
+                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
+                  <h4 style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a', fontWeight: '800' }}>Operational Profile Specifications</h4>
+                  
+                  {selectedUserProfile.designation === "Pointsman" && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '13px' }}>
+                      <div><strong>Reporting Station Master:</strong> {selectedUserProfile.reportingSm || "N/A"}</div>
+                      <div><strong>Assigned Shift:</strong> {selectedUserProfile.shift || "N/A"}</div>
+                      <div><strong>Work Location Setup:</strong> {selectedUserProfile.workLocation || "N/A"}</div>
+                    </div>
+                  )}
+
+                  {selectedUserProfile.designation === "Station Master" && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '13px' }}>
+                      <div><strong>Operational Station:</strong> {selectedUserProfile.smStation || selectedUserProfile.stationName || "N/A"}</div>
+                      <div><strong>Operational Division:</strong> {selectedUserProfile.smDivision || selectedUserProfile.division || "N/A"}</div>
+                      <div><strong>Operational Zone:</strong> {selectedUserProfile.smZone || selectedUserProfile.zone || "N/A"}</div>
+                    </div>
+                  )}
+
+                  {selectedUserProfile.designation === "Traffic Inspector" && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '13px' }}>
+                      <div><strong>Jurisdiction Division:</strong> {selectedUserProfile.jurisdiction || "N/A"}</div>
+                      <div><strong>Reporting AOM Officer:</strong> {selectedUserProfile.reportingAom || "N/A"}</div>
+                      <div style={{ gridColumn: 'span 3', marginTop: '5px' }}><strong>Linked Stations under supervision:</strong> {selectedUserProfile.linkedStations || "N/A"}</div>
+                    </div>
+                  )}
+
+                  {!["Pointsman", "Station Master", "Traffic Inspector"].includes(selectedUserProfile.designation) && (
+                    <span style={{ fontSize: '13px', color: '#64748b' }}>No dynamic operational specifications required for this designation.</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
+      }
       
       case "Pending Approvals": {
         const getEmployeeName = (empLine) => {
@@ -3728,9 +6126,9 @@ function AOmModule({ user, onLogout }) {
                 {visiblePendingAssessments.length === 0 ? (
                   <p className="assessment-detail">No pending entries in this option.</p>
                 ) : (
-                  <div className="assessment-table-wrapper">
-                    <div className="assessment-table">
-                      <div className="assessment-table-header assessment-table-cols">
+                  <div className="users-table-wrapper">
+                    <div className="users-table">
+                      <div className="table-header assessment-table-cols">
                         <div>HRMS ID</div>
                         <div>Employee Name</div>
                         <div>Designation</div>
@@ -3744,7 +6142,7 @@ function AOmModule({ user, onLogout }) {
                       {visiblePendingAssessments.map((item) => {
                         const row = buildAssessmentTableMeta(item);
                         return (
-                          <div key={item.id} className="assessment-table-row assessment-table-cols">
+                          <div key={item.id} className="table-row assessment-table-cols">
                             <div>{row.hrmsId}</div>
                             <div>{row.employeeName}</div>
                             <div>{row.designation}</div>
@@ -3877,9 +6275,9 @@ function AOmModule({ user, onLogout }) {
                   <h3>Approved by You</h3>
                   <span className="badge approved">{approvedAssessments.length}</span>
                 </div>
-                <div className="assessment-table-wrapper">
-                  <div className="assessment-table">
-                    <div className="assessment-table-header assessment-table-cols">
+                <div className="users-table-wrapper">
+                  <div className="users-table">
+                    <div className="table-header assessment-table-cols">
                       <div>HRMS ID</div>
                       <div>Employee Name</div>
                       <div>Designation</div>
@@ -3893,7 +6291,7 @@ function AOmModule({ user, onLogout }) {
                     {approvedAssessments.map((item) => {
                       const row = buildAssessmentTableMeta(item, true);
                       return (
-                        <div key={item.id} className="assessment-table-row assessment-table-cols">
+                        <div key={item.id} className="table-row assessment-table-cols">
                           <div>{row.hrmsId}</div>
                           <div>{row.employeeName}</div>
                           <div>{row.designation}</div>
@@ -4110,55 +6508,8 @@ function AOmModule({ user, onLogout }) {
                 margin: -4px 0 12px;
               }
 
-              .assessment-table-wrapper {
-                width: 100%;
-                overflow-x: auto;
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
-                max-width: 100%;
-              }
-
-              .assessment-table {
-                width: 100%;
-                min-width: 0;
-              }
-
-              .assessment-table-header,
-              .assessment-table-row {
-                display: grid;
-                align-items: center;
-                gap: 8px;
-                padding: 10px;
-              }
-
               .assessment-table-cols {
                 grid-template-columns: minmax(80px, 0.9fr) minmax(130px, 1.3fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(60px, 0.6fr) minmax(55px, 0.5fr) minmax(95px, 0.8fr) minmax(190px, 1.7fr);
-              }
-
-              .assessment-table-header {
-                background: #1565c0;
-                color: #fff;
-                font-size: 12px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.4px;
-              }
-
-              .assessment-table-row {
-                border-bottom: 1px solid #e6e6e6;
-                font-size: 13px;
-                color: #1f2937;
-                background: #fff;
-              }
-
-              .assessment-table-header > div,
-              .assessment-table-row > div {
-                min-width: 0;
-                word-break: break-word;
-              }
-
-              .assessment-table-row:last-child {
-                border-bottom: none;
               }
 
               .question-toolbar {
@@ -4290,26 +6641,52 @@ function AOmModule({ user, onLogout }) {
             </div>
 
             <div className="reports-container">
-              <div className="reports-filter">
-                <input 
-                  type="text" 
-                  placeholder="Search by HRMS ID or Employee Name"
-                  value={reportSearchQuery}
-                  onChange={(e) => setReportSearchQuery(e.target.value)}
-                  style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ddd", width: "300px" }}
-                />
-                <select
-                  value={reportDesignation}
-                  onChange={(e) => setReportDesignation(e.target.value)}
-                  style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ddd", marginLeft: "10px" }}
+              <div className="reports-filter" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <input 
+                    type="text" 
+                    placeholder="Search by HRMS ID or Employee Name"
+                    value={reportSearchQuery}
+                    onChange={(e) => setReportSearchQuery(e.target.value)}
+                    style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ddd", width: "300px" }}
+                  />
+                  <select
+                    value={reportDesignation}
+                    onChange={(e) => setReportDesignation(e.target.value)}
+                    style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ddd" }}
+                  >
+                    <option>All Designations</option>
+                    <option>Pointsman</option>
+                    <option>Station Master</option>
+                    <option>Train Manager</option>
+                    <option>Traffic Inspector</option>
+                    <option>Station Supervisor</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    borderRadius: "6px",
+                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                    color: "white",
+                    border: "none",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(16, 185, 129, 0.2)",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 6px rgba(16, 185, 129, 0.3)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 4px rgba(16, 185, 129, 0.2)"; }}
                 >
-                  <option>All Designations</option>
-                  <option>Pointsman</option>
-                  <option>Station Master</option>
-                  <option>Train Manager</option>
-                  <option>Traffic Inspector</option>
-                  <option>Station Supervisor</option>
-                </select>
+                  <FileDown size={16} />
+                  Export to CSV
+                </button>
               </div>
 
               <div className="reports-table-section">
@@ -4826,6 +7203,7 @@ function AOmModule({ user, onLogout }) {
           {renderPageContent()}
         </main>
       </div>
+      {renderChartZoomModal()}
     </div>
   );
 }
