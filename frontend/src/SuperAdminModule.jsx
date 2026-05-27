@@ -1282,19 +1282,6 @@ export default function SuperAdminModule({ user, onLogout }) {
           ))}
         </div>
 
-        {/* Timeline */}
-        <div className="sdom-chart-card" style={{marginBottom:24}}>
-          <div className="sdom-chart-title" style={{marginBottom:20}}>Assessment Process Flow</div>
-          <div className="sdom-timeline">
-            {["Created","Submitted","Under Review","Approved / Rejected","Locked & Filed"].map((step,i)=>(
-              <div className="sdom-timeline-step" key={step}>
-                <div className="sdom-timeline-dot">{i+1}</div>
-                <div className="sdom-timeline-label">{step}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Role-wise summary */}
         <div className="sdom-chart-card" style={{marginBottom:24}}>
           <div className="sdom-chart-title" style={{marginBottom:16}}>Role-wise Assessment Summary</div>
@@ -1401,24 +1388,6 @@ export default function SuperAdminModule({ user, onLogout }) {
               <div className="sdom-stat-label">{c.label}</div>
             </div>
           ))}
-        </div>
-
-        {/* Report type cards — clean list without colorful backgrounds */}
-        <div className="sdom-chart-card" style={{marginBottom:24}}>
-          <div className="sdom-chart-title" style={{marginBottom:16}}>Report Categories</div>
-          <div style={{display:"flex",flexDirection:"column",gap:0}}>
-            {reportTypes.map((r,i)=>(
-              <div key={r.label} style={{display:"flex",alignItems:"center",gap:16,padding:"14px 0",borderBottom: i<reportTypes.length-1 ? "1px solid #F0F4F8" : "none"}}>
-                <div style={{width:36,height:36,borderRadius:7,background:"#F0F4F8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <FileBarChart2 size={17} color="#1E3A5F"/>
-                </div>
-                <div>
-                  <div style={{fontSize:"0.9rem",fontWeight:700,color:"#102A43",lineHeight:1.3}}>{r.label}</div>
-                  <div style={{fontSize:"0.78rem",color:"#627D98",marginTop:2}}>{r.sub}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Filters */}
