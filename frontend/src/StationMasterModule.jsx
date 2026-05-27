@@ -3203,7 +3203,6 @@ function StationMasterModule({ user, onLogout }) {
             </div>
 
           </div>{/* end content */}
->>>>>>> Stashed changes
         </div>
       )}
     </div>
