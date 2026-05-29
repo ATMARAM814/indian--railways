@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Railways DBMS Design Report</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Prism Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #059669;
+            --accent-light: #ecfdf5;
+            --text: #334155;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--border);
+        }
+        
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 40px;
+            margin-bottom: 16px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+        
+        p {
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 24px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        code {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg);
+            color: #ef4444;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-weight: 400;
+        }
+        
+        pre {
+            background: #1e293b !important;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid #334155;
+        }
+        
+        .img-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+        }
+        
+        .img-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .caption {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .mermaid {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        blockquote {
+            border-left: 4px solid var(--accent);
+            background: var(--accent-light);
+            color: var(--primary);
+            padding: 12px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-weight: 500;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+            pre, code, .mermaid {
+                page-break-inside: avoid;
+            }
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .print-btn:hover {
+            background: #047857;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">
+        🖨️ Print / Save as PDF
+    </button>
+    <div class="container">
+        <h1>🚂 Indian Railways DBMS Schema Design</h1>
+<p>This document provides the full Relational Database Management System (DBMS) schema, entity relationships, and SQL DDL scripts to migrate the frontend <code>localStorage</code> database to a robust relational database (e.g., PostgreSQL, SQLite, or MySQL).</p>
+<br/>
+<p>It includes all 7 operational and administrative roles:</p>
+<ol start="1"><li>👑 **Super Admin** (Full system access)</li></ol>
+<ol start="2"><li>👔 **AOM** (Assistant Operations Manager - Divisional head)</li></ol>
+<ol start="3"><li>🕵️ **TI** (Traffic Inspector - Jurisdictional auditor)</li></ol>
+<ol start="4"><li>🏢 **SS** (Station Superintendent / SI - Station supervisor)</li></ol>
+<ol start="5"><li>🟢 **SM** (Station Master - Shift supervisor)</li></ol>
+<ol start="6"><li>🚩 **PM** (Pointsman - Shunting and operations)</li></ol>
+<ol start="7"><li>🚄 **TM** (Train Manager / Guard - On-board train lead)</li></ol>
+<br/>
+<p>---</p>
+<br/>
+<h2>🎨 Database Schema Visual Blueprint</h2>
+<p>Below is the visual relational diagram illustrating all tables, keys, and connections:</p>
+<br/>
+<div class="img-container"><img src="file:///C:/Users/athar/.gemini/antigravity/brain/068df53f-003c-47fa-8fab-b1c907a2fb0a/railway_dbms_schema_er_1780060985653.png" alt="DBMS Relational Schema Visual Blueprint"><p class="caption">DBMS Relational Schema Visual Blueprint</p></div>
+<br/>
+<p>---</p>
+<br/>
+<h2>📊 Entity-Relationship (ER) Diagram</h2>
+<p>Below is the interactive Mermaid diagram illustrating how all the railway modules are linked:</p>
+<br/>
+<div class="mermaid">erDiagram
+    EMPLOYEE {
+        int id PK
+        string hrms_id UK
+        string name
+        string designation
+        string email
+        string phone
+        string status
+        string password_hash
+        timestamp created_at
+    }
+    
+    STATION {
+        string station_code PK
+        string station_name
+        string division
+        string zone
+        string category
+        int tracks
+        string station_type
+        string status
+    }
+    
+    AOM {
+        int id PK
+        int employee_id FK
+        string division
+    }
+    
+    TRAFFIC_INSPECTOR {
+        int id PK
+        int employee_id FK
+        string jurisdiction
+    }
+
+    STATION_SUPERINTENDENT {
+        int id PK
+        int employee_id FK
+        string station_code FK
+    }
+    
+    STATION_MASTER {
+        int id PK
+        int employee_id FK
+        string station_code FK
+        int reporting_ss_id FK
+    }
+    
+    POINTSMAN {
+        int id PK
+        int employee_id FK
+        string station_code FK
+        int reporting_sm_id FK
+        string shift
+        string approval_status
+    }
+
+    TRAIN_MANAGER {
+        int id PK
+        int employee_id FK
+        string base_station_code FK
+    }
+    
+    TI_STATION_SUPERVISION {
+        int ti_id PK, FK
+        string station_code PK, FK
+    }
+
+    ASSESSMENT {
+        int id PK
+        int employee_id FK
+        int assessor_id FK
+        string exam_type
+        int score
+        string status
+        int safety_marks
+        int rules_marks
+        int practical_marks
+        int viva_marks
+        string grade
+        timestamp completed_at
+    }
+
+    TEST_ATTEMPT {
+        int id PK
+        int employee_id FK
+        string test_type
+        json answers
+        timestamp attempted_at
+    }
+
+    EMPLOYEE ||--o| AOM : "acts as"
+    EMPLOYEE ||--o| TRAFFIC_INSPECTOR : "acts as"
+    EMPLOYEE ||--o| STATION_SUPERINTENDENT : "acts as"
+    EMPLOYEE ||--o| STATION_MASTER : "acts as"
+    EMPLOYEE ||--o| POINTSMAN : "acts as"
+    EMPLOYEE ||--o| TRAIN_MANAGER : "acts as"
+    
+    STATION ||--o| STATION_SUPERINTENDENT : "managed by"
+    STATION ||--o| STATION_MASTER : "operated by"
+    STATION ||--o| POINTSMAN : "staffed with"
+    STATION ||--o| TRAIN_MANAGER : "stationed at"
+    
+    STATION_SUPERINTENDENT ||--o{ STATION_MASTER : "supervises"
+    STATION_MASTER ||--o| POINTSMAN : "supervises"
+    
+    TRAFFIC_INSPECTOR ||--o{ TI_STATION_SUPERVISION : "supervises"
+    STATION ||--o{ TI_STATION_SUPERVISION : "supervised by"
+    
+    EMPLOYEE ||--o{ ASSESSMENT : "assessed in"
+    EMPLOYEE ||--o{ TEST_ATTEMPT : "attempts"</div>
+<br/>
+<p>---</p>
+<br/>
+<h2>🗄️ Relational Database Schema Tables</h2>
+<br/>
+<h3>1. `employees`</h3>
+<p>Stores all staff profiles, designations, contact info, and security credentials.</p>
+<ul><li>`id` (INT PK, Auto-increment): Unique identifier for database operations.</li><li>`hrms_id` (VARCHAR(50) UK, NOT NULL): The official Indian Railways HRMS ID.</li><li>`name` (VARCHAR(150), NOT NULL): Employee's full name.</li><li>`designation` (VARCHAR(100), NOT NULL): E.g., 'Super Admin', 'AOM', 'Traffic Inspector', 'Station Superintendent', 'Station Master', 'Pointsman', 'Train Manager'.</li><li>`email` (VARCHAR(100) UNIQUE, NULL): Email address.</li><li>`phone` (VARCHAR(20), NULL): Contact number.</li><li>`status` (VARCHAR(20), DEFAULT 'Active'): E.g., 'Active', 'Inactive'.</li><li>`password_hash` (VARCHAR(255), NOT NULL): Secure hashed password.</li><li>`created_at` (TIMESTAMP DEFAULT NOW())</li></ul>
+<br/>
+<h3>2. `stations`</h3>
+<p>Stores the infrastructure configuration of all stations under Zonal/AOM jurisdiction.</p>
+<ul><li>`station_code` (VARCHAR(10) PK): Station Code (e.g. 'ALKEM', 'CIPLA').</li><li>`station_name` (VARCHAR(100), NOT NULL): Full station name.</li><li>`division` (VARCHAR(50), NOT NULL): Mapped division (e.g. 'Mumbai', 'Delhi').</li><li>`zone` (VARCHAR(50), NOT NULL): Mapped railway zone (e.g. 'CR', 'WR').</li><li>`category` (VARCHAR(20)): Infrastructure category (e.g., 'NSG-1', 'NSG-2').</li><li>`tracks` (INT, DEFAULT 2): Number of parallel tracks at the station.</li><li>`station_type` (VARCHAR(50)): E.g., 'Junction', 'Terminal', 'Way Station'.</li><li>`status` (VARCHAR(20), DEFAULT 'Active')</li></ul>
+<br/>
+<h3>3. `aoms`</h3>
+<p>Assistant Operations Managers linked to employees and managing a division.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`division` (VARCHAR(50), NOT NULL)</li></ul>
+<br/>
+<h3>4. `traffic_inspectors`</h3>
+<p>Profiles for Traffic Inspectors, linked to employees and a jurisdiction division.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`jurisdiction` (VARCHAR(50), NOT NULL): Supervising division.</li></ul>
+<br/>
+<h3>5. `station_superintendents`</h3>
+<p>Station Superintendents (SS) heading larger class-A stations.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`station_code` (VARCHAR(10) FK -> `stations.station_code`, UNIQUE, NOT NULL)</li></ul>
+<br/>
+<h3>6. `station_masters`</h3>
+<p>Profiles for Station Masters, linked to employees and managing a specific station.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`station_code` (VARCHAR(10) FK -> `stations.station_code`, NOT NULL)</li><li>`reporting_ss_id` (INT FK -> `station_superintendents.id`, NULL)</li></ul>
+<br/>
+<h3>7. `pointsmen`</h3>
+<p>Profiles for Pointsmen, linked to their station and reporting Station Master.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`station_code` (VARCHAR(10) FK -> `stations.station_code`, NOT NULL)</li><li>`reporting_sm_id` (INT FK -> `station_masters.id`, NULL)</li><li>`shift` (VARCHAR(10), DEFAULT 'Day'): Current operational shift ('Day', 'Night', 'Continuous').</li><li>`approval_status` (VARCHAR(20), DEFAULT 'Pending'): Approval from TI/AOM.</li></ul>
+<br/>
+<h3>8. `train_managers`</h3>
+<p>Train Managers (Guards) operating out of a specific base station.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, UNIQUE, NOT NULL)</li><li>`base_station_code` (VARCHAR(10) FK -> `stations.station_code`, NOT NULL)</li></ul>
+<br/>
+<h3>9. `ti_station_supervision`</h3>
+<p>Junction table showing which stations a Traffic Inspector supervises.</p>
+<ul><li>`ti_id` (INT FK -> `traffic_inspectors.id`, PK)</li><li>`station_code` (VARCHAR(10) FK -> `stations.station_code`, PK)</li></ul>
+<br/>
+<h3>10. `assessments`</h3>
+<p>Tracks formal assessments, scores, grade metrics, and supervisor feedback.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, NOT NULL)</li><li>`assessor_id` (INT FK -> `employees.id`, NOT NULL)</li><li>`exam_type` (VARCHAR(50), NOT NULL): E.g., 'Routine', 'Refresher', 'Safety Audit'.</li><li>`score` (INT, NOT NULL): Overall grade score out of 100.</li><li>`status` (VARCHAR(20), DEFAULT 'Completed'): E.g. 'Pending', 'In Progress', 'Completed'.</li><li>`safety_marks` (INT DEFAULT 0)</li><li>`rules_marks` (INT DEFAULT 0)</li><li>`practical_marks` (INT DEFAULT 0)</li><li>`viva_marks` (INT DEFAULT 0)</li><li>`grade` (VARCHAR(5)): Calculated grade (A, B, C, F).</li><li>`completed_at` (TIMESTAMP DEFAULT NOW())</li></ul>
+<br/>
+<h3>11. `test_attempts`</h3>
+<p>Saves details of MCQ tests taken by Pointsmen and Station Masters.</p>
+<ul><li>`id` (INT PK, Auto-increment)</li><li>`employee_id` (INT FK -> `employees.id`, NOT NULL)</li><li>`test_type` (VARCHAR(50), NOT NULL): MCQ test identification.</li><li>`answers` (JSONB, NOT NULL): Detailed JSON payload of answers given.</li><li>`attempted_at` (TIMESTAMP DEFAULT NOW())</li></ul>
+<br/>
+<p>---</p>
+<br/>
+<h2>🖨️ PostgreSQL DDL Script</h2>
+<br/>
+<p>You can copy and run this DDL script in any standard database console to create the relations:</p>
+<br/>
+<pre><code class="language-sql">-- Create employees table
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    hrms_id VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    designation VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'Active',
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create stations table
+CREATE TABLE stations (
+    station_code VARCHAR(10) PRIMARY KEY,
+    station_name VARCHAR(100) NOT NULL,
+    division VARCHAR(50) NOT NULL,
+    zone VARCHAR(50) NOT NULL,
+    category VARCHAR(20),
+    tracks INT DEFAULT 2,
+    station_type VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'Active'
+);
+
+-- Create aoms table
+CREATE TABLE aoms (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    division VARCHAR(50) NOT NULL
+);
+
+-- Create traffic_inspectors table
+CREATE TABLE traffic_inspectors (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    jurisdiction VARCHAR(50) NOT NULL
+);
+
+-- Create station_superintendents table
+CREATE TABLE station_superintendents (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    station_code VARCHAR(10) UNIQUE REFERENCES stations(station_code) ON DELETE SET NULL
+);
+
+-- Create station_masters table
+CREATE TABLE station_masters (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    station_code VARCHAR(10) NOT NULL REFERENCES stations(station_code) ON DELETE CASCADE,
+    reporting_ss_id INT REFERENCES station_superintendents(id) ON DELETE SET NULL
+);
+
+-- Create pointsmen table
+CREATE TABLE pointsmen (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    station_code VARCHAR(10) NOT NULL REFERENCES stations(station_code) ON DELETE CASCADE,
+    reporting_sm_id INT REFERENCES station_masters(id) ON DELETE SET NULL,
+    shift VARCHAR(10) DEFAULT 'Day',
+    approval_status VARCHAR(20) DEFAULT 'Pending'
+);
+
+-- Create train_managers table
+CREATE TABLE train_managers (
+    id SERIAL PRIMARY KEY,
+    employee_id INT UNIQUE NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    base_station_code VARCHAR(10) NOT NULL REFERENCES stations(station_code) ON DELETE CASCADE
+);
+
+-- Create TI to station supervision junction table
+CREATE TABLE ti_station_supervision (
+    ti_id INT REFERENCES traffic_inspectors(id) ON DELETE CASCADE,
+    station_code VARCHAR(10) REFERENCES stations(station_code) ON DELETE CASCADE,
+    PRIMARY KEY (ti_id, station_code)
+);
+
+-- Create assessments table
+CREATE TABLE assessments (
+    id SERIAL PRIMARY KEY,
+    employee_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    assessor_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    exam_type VARCHAR(50) NOT NULL,
+    score INT NOT NULL,
+    status VARCHAR(20) DEFAULT 'Completed',
+    safety_marks INT DEFAULT 0,
+    rules_marks INT DEFAULT 0,
+    practical_marks INT DEFAULT 0,
+    viva_marks INT DEFAULT 0,
+    grade VARCHAR(5),
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create test_attempts table
+CREATE TABLE test_attempts (
+    id SERIAL PRIMARY KEY,
+    employee_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    test_type VARCHAR(50) NOT NULL,
+    answers JSONB NOT NULL,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+<br/>
+
+    </div>
+
+    <!-- Mermaid Rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    
+    <!-- Prism Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
